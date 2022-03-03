@@ -3,6 +3,13 @@ import os
 import spectrum
 import numpy as np
 
+
+class TestOceanViewSpectralFile(unittest.TestCase):
+    def testOpenFile(self):
+        pass
+
+
+
 class TestSpectrum(unittest.TestCase):
 
     def test_listNameOfFiles(self):
@@ -77,3 +84,8 @@ class TestSpectrum(unittest.TestCase):
 
         self.assertEqual(list(test.y[0]), list(np.zeros(1044)))
         self.assertNotEqual(list(test.y[1]), list(np.zeros(1044)))
+
+
+if __name__ == "__main__":
+    unittest.main()
+    

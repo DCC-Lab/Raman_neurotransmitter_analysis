@@ -6,18 +6,15 @@ from sklearn.metrics import r2_score
 from scipy.optimize import curve_fit
 
 
-class Spectrum:
-
-    def __init__(self, directory: str):
+class Acquisition:
+    def __init__(self, directory):
         self.directory = directory
-        self.x = []
-        self.y = []
-        self.sum_y = [np.zeros(1044)]
-        self.fileName = []
+        self.spectralFiles = []
 
-        self._load()
-        self.sumData()
-
+        filePaths = self._listNameOfFiles()
+        for filepath in filePaths:
+            spectralFile = OceanViewSpectralFile(filepath)
+            self.spectralFiles.append(spectralFile)
 
     def _listNameOfFiles(self, extension="txt") -> list:
         foundFiles = []
@@ -27,34 +24,67 @@ class Spectrum:
                 foundFiles.append(file)
         return foundFiles
 
+    def spectra(self):
+        spectra = []
+        for file in self.spectralFiles:=
+            spectra.append( file.spectrum() )
+
+        return spectra
+
+    def spectraSum(self):
+        pass
+
+        return spectra
+
+class OceanViewSpectralFile:
+
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.x = []
+        self.y = []
+        self.sum_y = [np.zeros(1044)]
+        self.fileName = []
+
+        self._load()
+        self.sumData()
+
+    def isValid(self, filepath):
+
 
     def _load(self):
         donnees_tot_x = []
         donnees_tot_y = []
 
-        for nom in self._listNameOfFiles():
-            # Nom du fichier à importer
-            fich = open(self.directory + '/' + nom, "r")
-            test_str = list(fich)[14:]
-            fich.close()
-            x_raw = []
-            y_raw = []
-            self.fileName.append(nom)
-            # Nettoyer les informations
-            for j in test_str:
-                elem_str = j.replace(",", ".").replace("\n", "").replace("\t", ",")
-                elem = elem_str.split(",")
-                x_raw.append(float(elem[0]))
-                y_raw.append(float(elem[1]))
+        fich = open(self.filepath, "r")
+        test_str = list(fich)[14:]
+        fich.close()
+        x_raw = []
+        y_raw = []
+        self.fileName.append(nom)
+        # Nettoyer les informations
+        for j in test_str:
+            elem_str = j.replace(",", ".").replace("\n", "").replace("\t", ",")
+            elem = elem_str.split(",")
+            x_raw.append(float(elem[0]))
+            y_raw.append(float(elem[1]))
 
-            donnees_tot_x.append(x_raw)
-            donnees_tot_y.append(y_raw)
+        donnees_tot_x.append(x_raw)
+        donnees_tot_y.append(y_raw)
 
         self.x, self.y = donnees_tot_x, donnees_tot_y
 
 
     def directoryName(self):
         return self.directory.split('/')[-2]
+
+
+    def spectrum(self):
+        return Spectrum(self.x, self.y)
+
+class Spectrum:
+    def __init__(self,x, y):
+        self.wavelengths = x
+        self.intensities = y
 
     @staticmethod
     def getSNR(val, bgStart=550, bgEnd=800):

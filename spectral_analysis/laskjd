@@ -1,0 +1,52 @@
+
+
+
+class Spectrum:
+    def __init__(self, wavelengths, intensities, properties = None):
+        self.x = wavelengths
+        self.y = intensities
+        self.properties = properties
+
+    def substractBackground(self):
+        pass
+
+    def normalize(self):
+        pass
+
+
+class OceanViewSpectralFile:
+    def __init__(self, filepath: str):
+        self.directory = directory
+        self.x = []
+        self.y = []
+        self.sum_y = [np.zeros(1044)]
+        self.fileName = []
+
+        self._load()
+        self.sumData()
+
+
+class Acquisition:
+    def __init__(self, directory: str):
+
+
+
+class SpectrumAnalyzer:
+    def __init__(self, rootDir):
+
+
+
+
+    def loadAllAcquisitions(self):
+
+
+    def acquisitions(self):
+
+
+    def display(self, acquistion)
+
+
+
+
+
+
