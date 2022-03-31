@@ -211,7 +211,7 @@ class Spectrum:
         return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (np.amax(self.counts) - bg_AVG)
 
 
-    def display(self, WN=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
+    def display(self, WN=True, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
         if WN == True:
             xlabel = 'Wavenumber [cm-1]'
             plt.plot(self.wavenumbers, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
@@ -258,6 +258,96 @@ class Spectrum:
         self.counts = list(np.array(self.counts) / np.amax(self.counts))
 
 
+    def addSpectra(self, spectraToAdd):
+        # Returns a spectra object containing this spectrum + the spectra or spectrum given as argument
+        assert type(spectraToAdd) == Spectra or Spectrum, 'Expecting a Spectra or Spectrum type argument'
+        newSpectra = Spectra([Spectrum(self.wavelenghts, self.counts, self.integrationTime, self.label)])
+
+        if type(spectraToAdd) == Spectra:
+            for spectrum in spectraToAdd.spectra:
+                newSpectra.spectra.append(spectrum)
+
+        if type(spectraToAdd) == Spectrum:
+            newSpectra.spectra.append(spectraToAdd)
+
+        return newSpectra
+
+
+    @staticmethod
+    def polyFunc(x, fit_coefs):
+        assert type(fit_coefs) == list
+        fit_coefs.reverse()
+
+        coefs = list(np.zeros(31))
+
+        for i in range(len(fit_coefs)):
+            coefs[i] = fit_coefs[i]
+
+        y = []
+        for i in x:
+            y.append(coefs[0] + coefs[1] * i + coefs[2] * i ** 2 + coefs[3] * i ** 3 + coefs[4] * i ** 4 + coefs[
+                5] * i ** 5 + coefs[6] * i ** 6 + coefs[7] * i ** 7 + coefs[8] * i ** 8 + coefs[9] * i ** 9 + coefs[
+                         10] * i ** 10 + coefs[11] * i ** 11 + coefs[12] * i ** 12 + coefs[13] * i ** 13 + coefs[
+                         14] * i ** 14 + coefs[15] * i ** 15 + coefs[16] * i ** 16 + coefs[17] * i ** 17 + coefs[
+                         18] * i ** 18 + coefs[19] * i ** 19 + coefs[20] * i ** 20 + coefs[21] * i ** 21 + coefs[
+                         22] * i ** 22 + coefs[23] * i ** 23 + coefs[24] * i ** 24 + coefs[25] * i ** 25 + coefs[
+                         26] * i ** 26 + coefs[27] * i ** 27 + coefs[28] * i ** 28 + coefs[29] * i ** 29 + coefs[
+                         30] * i ** 30)
+
+        return y
+
+
+    def polyfit(self, poly_order):
+        # should return a spectum object ? i think so....
+        # should i raise expection for it to work without any integration time?
+        fit_coefs = list(np.polyfit(self.wavenumbers, self.counts, poly_order))
+        y_fit = self.polyFunc(self.wavenumbers, fit_coefs)
+
+
+
+        plt.plot(self.wavenumbers, self.counts, 'k-', label='Data curve')
+        plt.plot(self.wavenumbers, y_fit, 'r--', label='{0}th order polynomial fit'.format(poly_order))
+        plt.plot(self.wavenumbers, np.array(self.counts)-np.array(y_fit), 'r', label='subtraction')
+        plt.legend()
+        plt.show()
+
+        label = self.label + '_fit'
+        return Spectrum(self.wavenumbers, y_fit, self.integrationTime, label)
+
+
+    def fftFilter(self):
+        # should change self.counts so it
+        d = (self.wavenumbers[-1] - self.wavenumbers[0]) / len(self.wavenumbers)
+        fhat = np.fft.fft(self.counts, len(self.counts))
+        PSD = fhat * np.conj(fhat) / len(self.counts)
+        freq = (1 / (d * len(self.counts))) * np.arange(len(self.counts))
+        L = np.arange(1, np.floor(len(self.counts)/2), dtype='int')
+
+        PSDtreated = PSD
+        val = 515
+        #   Highpass
+        # PSDtreated[:val] = 0
+        # fhat[:val] = 0
+        # fhat[-val:] = 0
+        #   Lowpass
+        PSDtreated[-val:] = 0
+        fhat[int(((len(fhat) / 2) - val)): int((len(fhat) / 2))] = 0
+        fhat[int((len(fhat) / 2)): int(((len(fhat) / 2) + val))] = 0
+        ffilt = np.fft.ifft(fhat)
+
+
+        plt.plot(freq[L], PSDtreated[L])
+        plt.show()
+
+        plt.plot(self.wavenumbers, ffilt, 'r')
+        plt.plot(self.wavenumbers, self.counts, 'k')
+        plt.show()
+
+        plt.plot(self.wavenumbers, (self.counts - ffilt))
+        plt.show()
+
+
+
 class Spectra:
     def __init__(self, spectra):
         self.spectra = spectra
@@ -300,3 +390,26 @@ class Spectra:
             spectrum.normalizeCounts()
 
 
+    def addSpectra(self, spectraToAdd):
+        assert type(spectraToAdd) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
+        before = len(self.spectra)
+
+        if type(spectraToAdd) == Spectra:
+            for spectrum in spectraToAdd.spectra:
+                self.spectra.append(spectrum)
+
+            after = len(self.spectra)
+            assert after == (before + len(
+                spectraToAdd.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
+
+        if type(spectraToAdd) == Spectrum:
+            self.spectra.append(spectraToAdd)
+
+            after = len(self.spectra)
+            assert after == before + 1, 'The spectrum that was supposed to be added to this object has not been properly added'
+
+        return Spectra(self.spectra)
+
+
+    def pca(self):
+        

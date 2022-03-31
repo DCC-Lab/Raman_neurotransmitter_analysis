@@ -10,26 +10,32 @@ water.removeThermalNoise(bg)
 # water.normalizeCounts()
 # water.display()
 
-dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectra()
-dopamine.removeThermalNoise(bg)
-dopamine.subtract(water)
-dopamine.normalizeCounts()
-dopamine.display()
-
-GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/')
-GABAsum = GABA.spectra()
-# GABAsum.removeThermalNoise(bg)
+GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/').spectra()
+GABA.removeThermalNoise(bg)
 # GABAsum.display()
 # GABAsum.normalizeCounts()
-GABAsum.subtract(water)
+# GABAsum.subtract(water)
+# GABAsum.fftFilter()
 # GABAsum.display()
 
 
-# plt.plot(dopamine.wavenumber, dopamine.counts, label='GABA')
-# plt.plot(dopamine.wavenumber, y, label='GABA - water')
+
+
+dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectraSum()
+dopamine.removeThermalNoise(bg)
+dopamine.subtract(water)
+# dopamine.display()
+
+# plt.plot(dopamine.wavenumbers, y1, label='dopamine raw')
+# plt.plot(dopamine.wavenumbers, y2, label='dopamine not noisy')
+# plt.plot(dopamine.wavenumbers, dopamine.counts, label='dopamine not noisy, no background')
+# plt.xlabel('Wavenumber [cm-1]')
+# plt.ylabel('Counts [-]')
 # plt.legend()
 # plt.show()
 
+new_spectra = dopamine.addSpectra(GABA)
+new_spectra.display()
 
 
 
