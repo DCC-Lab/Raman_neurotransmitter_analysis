@@ -14,7 +14,7 @@ water.removeThermalNoise(bg)
 
 GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/').spectra()
 GABA.removeThermalNoise(bg)
-GABA.subtract(watersum)
+# GABA.subtract(watersum)
 # GABAsum.display()
 # GABAsum.normalizeCounts()
 # GABAsum.subtract(water)
@@ -26,7 +26,7 @@ GABA.subtract(watersum)
 
 dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectra()
 dopamine.removeThermalNoise(bg)
-dopamine.subtract(watersum)
+# dopamine.subtract(watersum)
 # dopamine.subtract(water)
 # dopamine.display()
 
@@ -41,7 +41,6 @@ dopamine.subtract(watersum)
 new_spectra = dopamine.addSpectra(GABA, water)
 # new_spectra.display()
 new_spectra.pca()
-new_spectra.getData()
-new_spectra.pcaTransformedData()
+new_spectra.pcaScatterPlot(PCx=1, PCy=2)
 
 

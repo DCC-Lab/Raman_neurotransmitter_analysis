@@ -360,6 +360,9 @@ class Spectra:
         self.PCA = None
         self.data = []
 
+        for spectrum in self.spectra:
+            spectrum_features = np.array(spectrum.counts)
+            self.data.append(spectrum_features)
 
 
     def display(self, WN=True):
@@ -444,19 +447,33 @@ class Spectra:
         plt.show()
 
 
-    def pcaTransformedData(self):
+    def pcaScatterPlot(self, PCx, PCy=None, PCz=None):
         pca_data = self.PCA.fit_transform(self.data)
         labels = []
+        columns = []
+
         for spectrum in self.spectra:
             labels.append(spectrum.label)
 
-        df = pd.DataFrame(pca_data, index=labels)
+        for PC in range(len(self.PC)):
+            columns.append('PC{0}'.format(PC + 1))
 
-        fig = px.scatter(df, x=pca_data[:, 0], y=pca_data[:, 1], color=labels)
+        df = pd.DataFrame(pca_data, index=labels, columns=columns)
+
+        if PCy == None and PCz == None:
+            fig = px.scatter(df, x='PC{0}'.format(PCx), color=labels)
+
+        if PCz == None and PCy != None:
+            fig = px.scatter(df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=labels)
+
+        if PCy != None and PCz != None:
+            fig = px.scatter_3d(df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=labels)
+
         fig.show()
 
 
-    def getData(self):
-        for spectrum in self.spectra:
-            spectrum_features = np.array(spectrum.counts)
-            self.data.append(spectrum_features)
+
+
+
+
+
