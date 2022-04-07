@@ -3,7 +3,10 @@ import fnmatch
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
+from sklearn.decomposition import PCA
 from scipy.optimize import curve_fit
+import plotly.express as px
+import pandas as pd
 
 
 class OceanViewSpectralFile:
@@ -249,7 +252,7 @@ class Spectrum:
     def normalizeIntegration(self):
         integration = 0
         for i in self.counts:
-            integration += i
+            integration += abs(i)
 
         self.counts = list(np.array(self.counts) / integration)
 
@@ -351,6 +354,12 @@ class Spectrum:
 class Spectra:
     def __init__(self, spectra):
         self.spectra = spectra
+        self.PC = []
+        self.EVR = []
+        self.SV = []
+        self.PCA = None
+        self.data = []
+
 
 
     def display(self, WN=True):
@@ -390,26 +399,64 @@ class Spectra:
             spectrum.normalizeCounts()
 
 
-    def addSpectra(self, spectraToAdd):
-        assert type(spectraToAdd) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
-        before = len(self.spectra)
+    def addSpectra(self, *spectraToAdd):
+        for spec in spectraToAdd:
+            assert type(spec) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
 
-        if type(spectraToAdd) == Spectra:
-            for spectrum in spectraToAdd.spectra:
-                self.spectra.append(spectrum)
+            if type(spec) == Spectra:
+                before = len(self.spectra)
+                for spectrum in spec.spectra:
+                    self.spectra.append(spectrum)
 
-            after = len(self.spectra)
-            assert after == (before + len(
-                spectraToAdd.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
+                after = len(self.spectra)
+                assert after == (before + len(
+                    spec.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
 
-        if type(spectraToAdd) == Spectrum:
-            self.spectra.append(spectraToAdd)
+            if type(spec) == Spectrum:
+                before = len(self.spectra)
+                self.spectra.append(spec)
 
-            after = len(self.spectra)
-            assert after == before + 1, 'The spectrum that was supposed to be added to this object has not been properly added'
+                after = len(self.spectra)
+                assert after == before + 1, 'The spectrum that was supposed to be added to this object has not been properly added'
 
         return Spectra(self.spectra)
 
 
-    def pca(self):
-        
+    def pca(self, nbOfComp = 10):
+        data = []
+
+        for spectrum in self.spectra:
+            data.append(spectrum.counts)
+
+        self.PCA = PCA(n_components=nbOfComp)
+        self.PCA.fit(data)
+
+        for i in range(nbOfComp):
+            self.SV.append(self.PCA.singular_values_[i])
+            self.EVR.append(self.PCA.explained_variance_ratio_[i])
+            self.PC.append(Spectrum(self.spectra[0].wavelenghts, self.PCA.components_[i], 1, 'PC{0}, val propre = {1}'.format(i + 1, self.PCA.explained_variance_ratio_[i])))
+
+
+    def pcaDisplay(self, *PCs):
+        for PC in PCs:
+            plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+        plt.legend()
+        plt.show()
+
+
+    def pcaTransformedData(self):
+        pca_data = self.PCA.fit_transform(self.data)
+        labels = []
+        for spectrum in self.spectra:
+            labels.append(spectrum.label)
+
+        df = pd.DataFrame(pca_data, index=labels)
+
+        fig = px.scatter(df, x=pca_data[:, 0], y=pca_data[:, 1], color=labels)
+        fig.show()
+
+
+    def getData(self):
+        for spectrum in self.spectra:
+            spectrum_features = np.array(spectrum.counts)
+            self.data.append(spectrum_features)

@@ -4,14 +4,17 @@ import matplotlib.pyplot as plt
 # A NEW ERA HAS BEGUN!!!!!!!!!!!!!!!!!!!!!!!
 
 bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/10min_0light/').spectraSum()
+watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
+watersum.removeThermalNoise(bg)
 
-water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
+water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectra()
 water.removeThermalNoise(bg)
 # water.normalizeCounts()
 # water.display()
 
 GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/').spectra()
 GABA.removeThermalNoise(bg)
+GABA.subtract(watersum)
 # GABAsum.display()
 # GABAsum.normalizeCounts()
 # GABAsum.subtract(water)
@@ -21,9 +24,10 @@ GABA.removeThermalNoise(bg)
 
 
 
-dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectraSum()
+dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectra()
 dopamine.removeThermalNoise(bg)
-dopamine.subtract(water)
+dopamine.subtract(watersum)
+# dopamine.subtract(water)
 # dopamine.display()
 
 # plt.plot(dopamine.wavenumbers, y1, label='dopamine raw')
@@ -34,9 +38,10 @@ dopamine.subtract(water)
 # plt.legend()
 # plt.show()
 
-new_spectra = dopamine.addSpectra(GABA)
-new_spectra.display()
-
-
+new_spectra = dopamine.addSpectra(GABA, water)
+# new_spectra.display()
+new_spectra.pca()
+new_spectra.getData()
+new_spectra.pcaTransformedData()
 
 
