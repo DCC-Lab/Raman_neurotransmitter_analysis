@@ -1,5 +1,7 @@
 import os
 import fnmatch
+from typing import List
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
@@ -7,6 +9,7 @@ from sklearn.decomposition import PCA
 from scipy.optimize import curve_fit
 import plotly.express as px
 import pandas as pd
+
 
 
 class OceanViewSpectralFile:
@@ -214,12 +217,14 @@ class Spectrum:
         return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (np.amax(self.counts) - bg_AVG)
 
 
-    def display(self, WN=True, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
+    def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
         if WN == True:
             xlabel = 'Wavenumber [cm-1]'
-            plt.plot(self.wavenumbers, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
+            plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
         if WN == False:
             plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
+        if NoX == True:
+            plt.plot(self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
@@ -303,14 +308,14 @@ class Spectrum:
     def polyfit(self, poly_order):
         # should return a spectum object ? i think so....
         # should i raise expection for it to work without any integration time?
-        fit_coefs = list(np.polyfit(self.wavenumbers, self.counts, poly_order))
+        fit_coefs = list(np.polyfit(self.wavenumbers[63:], self.counts[63:], poly_order))
         y_fit = self.polyFunc(self.wavenumbers, fit_coefs)
 
 
 
         plt.plot(self.wavenumbers, self.counts, 'k-', label='Data curve')
-        plt.plot(self.wavenumbers, y_fit, 'r--', label='{0}th order polynomial fit'.format(poly_order))
-        plt.plot(self.wavenumbers, np.array(self.counts)-np.array(y_fit), 'r', label='subtraction')
+        plt.plot(self.wavenumbers[63:], y_fit[63:], 'r--', label='{0}th order polynomial fit'.format(poly_order))
+        plt.plot(self.wavenumbers[63:], (np.array(self.counts)-np.array(y_fit))[63:], 'r', label='subtraction')
         plt.legend()
         plt.show()
 
@@ -350,10 +355,28 @@ class Spectrum:
         plt.show()
 
 
+    def setZero(self, val):
+        self.counts[0:val] = 0
+
+
+    def fixSpec(self):
+        x = np.array(self.wavenumbers)
+        x = x - 85
+        self.wavenumbers = x
+
+        for i in range(len(self.wavenumbers)):
+            self.wavenumbers[i] = self.wavenumbers[i] + 10 * ((self.wavenumbers[i]) / 747)
+
+
+
+
 
 class Spectra:
-    def __init__(self, spectra):
-        self.spectra = spectra
+    def __init__(self, items):
+        self.spectra = []
+        for item in items:
+            self.add(item)
+
         self.PC = []
         self.EVR = []
         self.SV = []
@@ -402,27 +425,26 @@ class Spectra:
             spectrum.normalizeCounts()
 
 
-    def addSpectra(self, *spectraToAdd):
-        for spec in spectraToAdd:
-            assert type(spec) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
+    def add(self, *items):
+        for item in items:
+            assert type(item) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
 
-            if type(spec) == Spectra:
+            if type(item) == Spectra:
                 before = len(self.spectra)
-                for spectrum in spec.spectra:
+                for spectrum in item.spectra:
                     self.spectra.append(spectrum)
 
                 after = len(self.spectra)
                 assert after == (before + len(
-                    spec.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
+                    item.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
 
-            if type(spec) == Spectrum:
+            if type(item) == Spectrum:
                 before = len(self.spectra)
-                self.spectra.append(spec)
+                self.spectra.append(item)
 
                 after = len(self.spectra)
                 assert after == before + 1, 'The spectrum that was supposed to be added to this object has not been properly added'
 
-        return Spectra(self.spectra)
 
 
     def pca(self, nbOfComp = 10):
@@ -471,6 +493,42 @@ class Spectra:
 
         fig.show()
 
+
+    def getSTD(self):
+        ratios = []
+        means = []
+        for val in range(len(self.spectra[0].wavelenghts)):
+            data = []
+            for spectrum in self.spectra:
+                data.append(spectrum.counts[val])
+                WL = spectrum.wavelenghts[val]
+            STD = np.std(data)
+            mean = np.mean(data)
+            means.append(mean)
+            ratio = mean/(STD**2)
+            ratios.append(ratio)
+
+            print('WL: {3},mean: {0}, STD: {1}, ratio: {2}'.format(mean, STD, ratio, WL))
+
+        plt.plot(self.spectra[0].wavelenghts, ratios)
+        plt.xlabel('Wavelenghts [cm-1]')
+        plt.ylabel('Ratio [photons / counts]')
+        plt.show()
+
+        plt.plot(means, ratios, 'o')
+        plt.xlabel('Mean [counts]')
+        plt.ylabel('Ratio [Photon/count]')
+        plt.show()
+
+
+    def setZero(self, val):
+        for spectrum in self.spectra:
+            spectrum.setZero(val)
+
+
+    def fixSpec(self):
+        for spectrum in self.spectra:
+            spectrum.fixSpec()
 
 
 
