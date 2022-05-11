@@ -14,7 +14,7 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # watersum.normalizeCounts()
 # watersum.polyfit(6)
 
-# water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectra()
+# water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
 # water.removeThermalNoise(bg)
 # water.normalizeCounts()
 # water.display()
@@ -57,29 +57,34 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # iso100full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
 # iso300full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/300ms_iso/').spectra()
 # iso100half = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso_halfpower/').spectra()
-
+#
 # iso100full.removeThermalNoise(bg)
-# iso300full.getSTD()
+# iso100full.getSTD()
 
 
 # Erika data
-# path = '/Users/antoinerousseau/Desktop/PM/'
+# path = '/Users/antoinerousseau/Desktop/20220314/'
+# path1 = '/Users/antoinerousseau/Desktop/20220411/'
 #
 # data = []
 # for dir in os.listdir(path):
 #     if dir[0] == '.':
 #         continue
 #     data.append(spectrum.Acquisition(path + dir + '/').spectra())
+# for dir in os.listdir(path1):
+#     if dir[0] == '.':
+#         continue
+#     data.append(spectrum.Acquisition(path1 + dir + '/').spectra())
 #
 # data = spectrum.Spectra(data)
 # data.removeThermalNoise(bg)
 # data.pca()
-# data.pcaDisplay()
+# data.pcaDisplay(1, 2, 3, 4)
 # data.pcaScatterPlot(PCx=1, PCy=2)
 
 
 # GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/PM/cm_30sec_lightoff_1A_2/').spectraSum()
-# water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
+# water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
 #
 # x = GABA.counts
 # GABA.removeThermalNoise(bg)
@@ -100,25 +105,25 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # plt.legend()
 # plt.show()
 
-D4 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D4/').spectraSum()
-D3 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D3/').spectraSum()
-D2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D2/').spectraSum()
-D5 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D5/').spectraSum()
-D1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D1/').spectraSum()
-D6 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D6/').spectraSum()
-
-bg1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/background/').spectra()
-
-iso1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
-iso2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/iso/').spectraSum()
-iso3 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
-
-iso2.fixSpec()
-
-iso2.setZero(20)
-
-plt.plot(iso1.spectra[0].wavenumbers, iso1.spectra[0].counts, label='old')
-plt.plot(iso2.wavenumbers, iso2.counts, label='new')
+# D4 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D4/').spectraSum()
+# D3 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D3/').spectraSum()
+# D2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D2/').spectraSum()
+# D5 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D5/').spectraSum()
+# D1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D1/').spectraSum()
+# D6 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/D6/').spectraSum()
+#
+# bg1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/background/').spectra()
+#
+# iso1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
+# iso2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/iso/').spectraSum()
+# iso3 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
+#
+# iso2.fixSpec()
+#
+# iso2.setZero(20)
+#
+# plt.plot(iso1.spectra[0].wavenumbers, iso1.spectra[0].counts, label='old')
+# plt.plot(iso2.wavenumbers, iso2.counts, label='new')
 # plt.plot(iso3.wavenumbers, iso3.counts, label='new')
 
 
@@ -135,5 +140,61 @@ plt.plot(iso2.wavenumbers, iso2.counts, label='new')
 # plt.plot(D5.wavenumbers, D5.counts, label='D5')
 # plt.plot(D1.wavenumbers, D1.counts, label='D1')
 # plt.plot(D6.wavenumbers, D6.counts, label='D6')
-plt.legend()
-plt.show()
+# plt.legend()
+# plt.show()
+
+# GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/GABA_100mM/').spectraSum()
+# water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
+# water1.removeThermalNoise(bg)
+# water1.normalizeCounts()
+# GABA.removeThermalNoise(bg)
+# GABA.normalizeCounts()
+# water.removeThermalNoise(bg)
+# water.normalizeCounts()
+
+
+
+# plt.plot(GABA.wavenumbers, GABA.counts, label='GABA')
+# plt.plot(water.wavenumbers, water.counts, label='water')
+# plt.legend()
+# plt.show()
+
+# GABA.subtract(water)
+# GABA.smooth()
+# GABA.display()
+
+
+
+#victoria
+
+# path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/2 mo/'
+#
+# x = spectrum.Acquisition(path, fileType='VF', extension='').spectra()
+# print((x.spectra[0].counts))
+
+
+
+
+# data spectro shifted
+# iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
+# iso_good = iso_good.spectra[0]
+# iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
+#
+# plt.plot(iso_good.wavenumbers, iso_good.counts, 'k', label='Before crash')
+# plt.plot(iso_bad.wavenumbers, iso_bad.counts, 'r', label='After crash')
+# plt.legend()
+# plt.show()
+
+path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
+
+data = []
+for dir in os.listdir(path):
+    if dir[0] == '.':
+        continue
+    data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
+
+data = spectrum.Spectra(data)
+# data.removeThermalNoise(bg)
+data.pca()
+data.pcaDisplay(1, 2, 3, 4)
+data.pcaScatterPlot(PCx=1, PCy=4)

@@ -12,7 +12,7 @@ import pandas as pd
 
 
 
-class OceanViewSpectralFile:
+class QEproSpectralFile:
 
     def __init__(self, filepath: str):
         self.filepath = filepath
@@ -152,22 +152,208 @@ class OceanViewSpectralFile:
         self.pixel_nb = int(pixel_nb.split(': ')[-1])
 
 
+class USB2000SpectralFile:
+
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.x = []
+        self.y = []
+        self.date = None
+        self.trig_mode = None
+        self.integration_time = None
+        self.dark_corr = None
+        self.x_axis_unit = None
+        self.pixel_nb = None
+        self.fileName = filepath.split('/')[-1]
+        self.spectrum = None
+        self.README = None
+
+        self._loadSpectrumValues()
+        self.isValid()
+        self._loadAcquisitionDetails()
+
+
+
+    def isValid(self, pixelNb = 2048):
+        # Is it a .txt file
+        fileType = self.filepath.split('/')[-1][-4:]
+        assert fileType == '.txt', 'file type should be .txt'
+
+        # Does it contain expected strings at the right place
+        fich = open(self.filepath, "r")
+        fich_list = list(fich)
+        date = fich_list[2]
+        trig_mode = fich_list[6]
+        integration_time = fich_list[7]
+        dark_corr = fich_list[8]
+        x_axis_unit = fich_list[10]
+        pixel_nb = fich_list[11]
+        fich.close()
+
+        assert date.split(': ')[0] == 'Date', "Was expecting the .txt file\'s 3rd lane to be the date of the acquisition"
+        assert trig_mode.split(': ')[0] == 'Trigger mode', "Was expecting the .txt file\'s 6th lane to be the trigger mode used for the acquisition"
+        assert integration_time.split(': ')[0] == 'Integration Time (sec)', "Was expecting the .txt file\'s 7th lane to be the integration time used (in sec) for the acquisition"
+        assert dark_corr.split(': ')[0] == 'Electric dark correction enabled', "Was expecting the .txt file\'s 9th lane to be the electric dark correction state for the acquisition"
+        assert x_axis_unit.split(': ')[0] == 'XAxis mode', "Was expecting the .txt file\'s 12th lane to be the x axis units for the acquisition"
+        assert pixel_nb.split(': ')[0] == 'Number of Pixels in Spectrum', "Was expecting the .txt file\'s 13th lane to be the number of pixels used for the acquisition"
+
+        # Does it have the right len(x), len(y)
+        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb), str(len(self.x)))
+        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb), str(len(self.y)))
+        assert len(self.x) == len(self.y), "x and y values for a spectrum should have the same amount of elements"
+
+        # print('File is valid')
+
+
+    def _loadSpectrumValues(self):
+        fich = open(self.filepath, "r")
+        test_str = list(fich)[13:]
+        fich.close()
+
+        # Nettoyer les informations
+        spectral_data = []
+        for j in test_str:
+            elem_str = j.replace(",", ".").replace("\n", "").replace("\t", ",")
+            elem = elem_str.split(",")
+            self.x.append(float(elem[0]))
+            self.y.append(float(elem[1]))
+            spectral_data.append([float(elem[0]), float(elem[1])])
+        self.spectrum = np.transpose(spectral_data)
+
+
+    def _loadAcquisitionDetails(self):
+        fich = open(self.filepath, "r")
+        fich_list = list(fich)
+        date = fich_list[2]
+        trig_mode = fich_list[6]
+        integration_time = fich_list[7]
+        dark_corr = fich_list[8]
+        x_axis_unit = fich_list[10]
+        pixel_nb = fich_list[11]
+        fich.close()
+
+        year = (date.split(' ')[-1]).replace('\n', '')
+        day = date.split(' ')[-4]
+        if len(day) == 1:
+            day = '0' + day
+        month = date.split(' ')[-5]
+        if month == 'Jan':
+            month = '01'
+        if month == 'Feb':
+            month = '02'
+        if month == 'Mar':
+            month = '03'
+        if month == 'Apr':
+            month = '04'
+        if month == 'May':
+            month = '05'
+        if month == 'Jun':
+            month = '06'
+        if month == 'Jul':
+            month = '07'
+        if month == 'Aug':
+            month = '08'
+        if month == 'Sep':
+            month = '09'
+        if month == 'Oct':
+            month = '10'
+        if month == 'Nov':
+            month = '11'
+        if month == 'Dec':
+            month = '12'
+
+        integration_time = integration_time.split(': ')[-1]
+        integration_time = integration_time.replace('\t', '')
+        multiplier = int(integration_time.split('E')[-1])
+        integration_time = (float(integration_time.split('E')[0])) * (10 ** multiplier)
+
+        dark_corr = dark_corr.split(' ')[-1]
+        if dark_corr == 'true':
+            dark_corr = True
+        if dark_corr == 'false':
+            dark_corr = False
+
+
+        self.date = year + month + day
+        self.trig_mode = int(trig_mode.split(' ')[-1])
+        self.integration_time = integration_time
+        self.dark_corr = dark_corr.replace('\n', '')
+        self.x_axis_unit = x_axis_unit.split(': ')[-1].replace('\n', '')
+        self.pixel_nb = int(pixel_nb.split(': ')[-1])
+
+
+class VictoriaFiles:
+
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.x = []
+        self.y = []
+        self.fileName = filepath.split('/')[-1]
+        self.spectrum = None
+        self.README = None
+        self.integration_time = 1
+        self.label = 'victo'
+
+        self._loadSpectrumValues()
+        # self.isValid()
+        # self._loadAcquisitionDetails()
+
+    def _loadSpectrumValues(self):
+        fich = open(self.filepath, "r", errors='ignore')
+        test_str = list(fich)[3:]
+
+        # Nettoyer les informations
+        spectral_data = []
+        for j in test_str:
+            elem_str = j.replace("\n", "").replace("\t", ",")
+            elem = elem_str.split(",")
+            print(elem[41])
+            self.x.append(float(elem[41]))
+            self.y.append(float(elem[43]))
+            spectral_data.append([float(elem[0]), float(elem[1])])
+        self.spectrum = np.transpose(spectral_data)
+
+        fich.close()
+
+        print(spectral_data)
+        print(self.x)
+        # Nettoyer les informations
+        # spectral_data = []
+        # for j in test_str:
+        #     elem_str = j.replace(",", ".").replace("\n", "").replace("\t", ",")
+        #     elem = elem_str.split(",")
+        #     self.x.append(float(elem[0]))
+        #     self.y.append(float(elem[1]))
+        #     spectral_data.append([float(elem[0]), float(elem[1])])
+        # self.spectrum = np.transpose(spectral_data)
+
+
 
 class Acquisition:
-    def __init__(self, directory):
+    def __init__(self, directory, fileType='OVSF', extension='.txt'):
         self.directory = directory
         self.spectralFiles = []
         self.directoryName = directory.split('/')[-2]
+        self.extension = extension
 
         filePaths = self._listNameOfFiles()
-        for filepath in filePaths:
-            spectralFile = OceanViewSpectralFile(directory + filepath)
-            self.spectralFiles.append(spectralFile)
+
+        if fileType == 'OVSF':
+            for filepath in filePaths:
+                spectralFile = QEproSpectralFile(directory + filepath)
+                self.spectralFiles.append(spectralFile)
+        if fileType == 'VF':
+            for filepath in filePaths:
+                spectralFile = VictoriaFiles(directory + filepath)
+                self.spectralFiles.append(spectralFile)
+        if fileType == 'USB2000':
+            for filepath in filePaths:
+                spectralFile = USB2000SpectralFile(directory + filepath)
+                self.spectralFiles.append(spectralFile)
 
 
-    def _listNameOfFiles(self, extension="txt") -> list:
+    def _listNameOfFiles(self) -> list:
         foundFiles = []
-
         for file in os.listdir(self.directory):
             if file[0] == '.':
                 continue
@@ -176,7 +362,7 @@ class Acquisition:
                 RM = open(self.directory + file, "r")
                 self.README = list(RM)
                 continue
-            if fnmatch.fnmatch(file, f'*.{extension}'):
+            if fnmatch.fnmatch(file, f'*{self.extension}'):
                 foundFiles.append(file)
         return foundFiles
 
@@ -204,11 +390,16 @@ class Acquisition:
 class Spectrum:
     def __init__(self, wavelenghts, counts, integrationTime, label):
         self.wavelenghts = wavelenghts
-        self.wavenumbers = ((10 ** 7) * ((1 / 785) - (1 / np.array(self.wavelenghts))))
+
         self.counts = counts
         self.integrationTime = integrationTime
         self.label = label
 
+        exist = 0 in self.wavelenghts
+        if exist == False:
+            self.wavenumbers = ((10 ** 7) * ((1 / 785) - (1 / np.array(self.wavelenghts))))
+        if exist == True:
+            self.wavenumbers = None
 
     def getSNR(self, bgStart=550, bgEnd=800):
         bg_AVG = 0
@@ -220,11 +411,11 @@ class Spectrum:
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
         if WN == True:
             xlabel = 'Wavenumber [cm-1]'
-            plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
+            plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
         if WN == False:
-            plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
+            plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + 'IT: {0} s'.format(self.integrationTime))
         if NoX == True:
-            plt.plot(self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])+', peak = '+str(self.getSNR()[1]))
+            plt.plot(self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = ' + str(self.getSNR()[1])[:7] + 'IT: {0} s'.format(self.integrationTime))
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
@@ -368,6 +559,10 @@ class Spectrum:
             self.wavenumbers[i] = self.wavenumbers[i] + 10 * ((self.wavenumbers[i]) / 747)
 
 
+    def smooth(self):
+        for i in range(1, len(self.counts) - 1):
+            val = (self.counts[i - 1] + self.counts[i] + self.counts[i + 1]) / 3
+            self.counts[i] = val
 
 
 
