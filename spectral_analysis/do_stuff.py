@@ -167,11 +167,24 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 
 #victoria
 
-# path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/2 mo/'
-#
-# x = spectrum.Acquisition(path, fileType='VF', extension='').spectra()
-# print((x.spectra[0].counts))
+path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/'
 
+data = []
+for dir in os.listdir(path):
+    if dir[0] == '.':
+        continue
+    data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
+
+data = spectrum.Spectra(data)
+
+# data.display(WN=False)
+data.pca()
+data.pcaDisplay(1, 2, 3, 4)
+data.pcaScatterPlot(1, 2)
+
+# x = spectrum.Acquisition(path, fileType='VF', extension='').spectra()
+
+# x.display(WN=False)
 
 
 
@@ -185,16 +198,16 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # plt.legend()
 # plt.show()
 
-path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
-
-data = []
-for dir in os.listdir(path):
-    if dir[0] == '.':
-        continue
-    data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
-
-data = spectrum.Spectra(data)
-# data.removeThermalNoise(bg)
-data.pca()
-data.pcaDisplay(1, 2, 3, 4)
-data.pcaScatterPlot(PCx=1, PCy=4)
+# path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
+#
+# data = []
+# for dir in os.listdir(path):
+#     if dir[0] == '.':
+#         continue
+#     data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
+#
+# data = spectrum.Spectra(data)
+# # data.removeThermalNoise(bg)
+# data.pca()
+# data.pcaDisplay(1, 2)
+# data.pcaScatterPlot(PCx=1, PCy=2)

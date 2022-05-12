@@ -307,16 +307,13 @@ class VictoriaFiles:
         for j in test_str:
             elem_str = j.replace("\n", "").replace("\t", ",")
             elem = elem_str.split(",")
-            print(elem[41])
             self.x.append(float(elem[41]))
-            self.y.append(float(elem[43]))
-            spectral_data.append([float(elem[0]), float(elem[1])])
+            self.y.append(float(elem[58]))
+            spectral_data.append([float(elem[41]), float(elem[58])])
         self.spectrum = np.transpose(spectral_data)
 
         fich.close()
 
-        print(spectral_data)
-        print(self.x)
         # Nettoyer les informations
         # spectral_data = []
         # for j in test_str:
@@ -402,10 +399,13 @@ class Spectrum:
             self.wavenumbers = None
 
     def getSNR(self, bgStart=550, bgEnd=800):
-        bg_AVG = 0
-        for i in range(bgStart, bgEnd):
-            bg_AVG += self.counts[i] / (bgEnd - bgStart)
-        return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (np.amax(self.counts) - bg_AVG)
+        if len(self.counts) <= bgStart:
+            return None, None, None
+        else:
+            bg_AVG = 0
+            for i in range(bgStart, bgEnd):
+                bg_AVG += self.counts[i] / (bgEnd - bgStart)
+            return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (np.amax(self.counts) - bg_AVG)
 
 
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
@@ -578,6 +578,11 @@ class Spectra:
         self.PCA = None
         self.data = []
 
+        self._loadData()
+
+    def _loadData(self):
+        self.data = []
+
         for spectrum in self.spectra:
             spectrum_features = np.array(spectrum.counts)
             self.data.append(spectrum_features)
@@ -643,13 +648,10 @@ class Spectra:
 
 
     def pca(self, nbOfComp = 10):
-        data = []
-
-        for spectrum in self.spectra:
-            data.append(spectrum.counts)
+        self._loadData()
 
         self.PCA = PCA(n_components=nbOfComp)
-        self.PCA.fit(data)
+        self.PCA.fit(self.data)
 
         for i in range(nbOfComp):
             self.SV.append(self.PCA.singular_values_[i])
@@ -658,13 +660,20 @@ class Spectra:
 
 
     def pcaDisplay(self, *PCs):
-        for PC in PCs:
-            plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+        WN = False
+        if WN == True:
+            for PC in PCs:
+                plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+        if WN == False:
+            for PC in PCs:
+                plt.plot(self.spectra[0].wavelenghts, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
         plt.legend()
         plt.show()
 
 
     def pcaScatterPlot(self, PCx, PCy=None, PCz=None):
+        self._loadData()
+
         pca_data = self.PCA.fit_transform(self.data)
         labels = []
         columns = []
