@@ -8,6 +8,7 @@ from sklearn.metrics import r2_score
 from sklearn.decomposition import PCA
 from scipy.optimize import curve_fit
 import plotly.express as px
+from plotly.offline import plot
 import pandas as pd
 
 
@@ -300,7 +301,7 @@ class VictoriaFiles:
 
     def _loadSpectrumValues(self):
         fich = open(self.filepath, "r", errors='ignore')
-        test_str = list(fich)[3:]
+        test_str = list(fich)[3:123]
 
         # Nettoyer les informations
         spectral_data = []
@@ -695,7 +696,7 @@ class Spectra:
         if PCy != None and PCz != None:
             fig = px.scatter_3d(df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=labels)
 
-        fig.show()
+        plot(fig)
 
 
     def getSTD(self):

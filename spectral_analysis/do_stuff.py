@@ -167,24 +167,21 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 
 #victoria
 
-path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/'
-
-data = []
-for dir in os.listdir(path):
-    if dir[0] == '.':
-        continue
-    data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
-
-data = spectrum.Spectra(data)
-
-# data.display(WN=False)
-data.pca()
-data.pcaDisplay(1, 2, 3, 4)
-data.pcaScatterPlot(1, 2)
-
-# x = spectrum.Acquisition(path, fileType='VF', extension='').spectra()
-
-# x.display(WN=False)
+# path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/6mo/'
+#
+# data = []
+# for dir in os.listdir(path):
+#     if dir[0] == '.':
+#         continue
+#     data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
+#
+# data = spectrum.Spectra(data)
+# # data.display(WN=False)
+#
+# data.pca()
+#
+# data.pcaDisplay(1, 2)
+# data.pcaScatterPlot(1, 2)
 
 
 
@@ -198,16 +195,70 @@ data.pcaScatterPlot(1, 2)
 # plt.legend()
 # plt.show()
 
-# path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
+path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
+
+data = []
+for dir in os.listdir(path):
+    if dir[0] == '.':
+        continue
+    data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
+
+data = spectrum.Spectra(data)
+# data.removeThermalNoise(bg)
+data.pca()
+data.pcaDisplay(1, 2)
+data.pcaScatterPlot(PCx=1, PCy=2)
+
+
+
+
+
+
+# dev nonlin
+# x = np.linspace(-0.01, 0.01, num=101)
 #
-# data = []
-# for dir in os.listdir(path):
-#     if dir[0] == '.':
-#         continue
-#     data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
+# def spotSizeRadius(z, w0=0.0005, WL=500e-6):
+#     return w0 * np.sqrt((1 + ((z * WL) / (np.pi * w0**2))**2))
 #
-# data = spectrum.Spectra(data)
-# # data.removeThermalNoise(bg)
-# data.pca()
-# data.pcaDisplay(1, 2)
-# data.pcaScatterPlot(PCx=1, PCy=2)
+# def intensity(x):
+#     return 1  / (x**2 * np.pi)
+#
+# def intensity2(x):
+#     return (1 / (x**2 * np.pi))**2
+#
+# def intensity3(x):
+#     return (1 / (x**2 * np.pi))**3
+#
+#
+# def normalise(x):
+#     max = np.amax(x)
+#     new = []
+#     for i in x:
+#         new.append(i / max)
+#     return new
+#
+#
+# y1 = []
+# y = []
+# y2 = []
+# y3 = []
+# for i in x:
+#     ss = spotSizeRadius(i)
+#     y.append(ss)
+#     y1.append(intensity(ss))
+#     y2.append(intensity2(ss))
+#     y3.append(intensity3(ss))
+#
+# y1 = normalise(y1)
+# y2 = normalise(y2)
+# y3 = normalise(y3)
+#
+# x = np.array(x)*1000
+#
+# plt.plot(x, y1, label='1 photon')
+# plt.plot(x, y2, label='2 photons')
+# plt.plot(x, y3, label='3 photons')
+# plt.legend()
+# plt.xlabel('Distance from focal spot [um]')
+# plt.ylabel('Relative Intensity [-]')
+# plt.show()
