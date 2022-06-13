@@ -1,7 +1,6 @@
 import os
 import fnmatch
 from typing import List
-
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
@@ -10,6 +9,8 @@ from scipy.optimize import curve_fit
 import plotly.express as px
 from plotly.offline import plot
 import pandas as pd
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.preprocessing import StandardScaler
 
 
 
@@ -385,6 +386,58 @@ class Acquisition:
 
 
 
+class ArrayToSpectra:
+    def __init__(self, x, array, label=None, integrationTime=None):
+        self.x = x
+        self.data = array
+        self.labelList = label
+        self.integrationTimeList = integrationTime
+        self.spectra = []
+
+        if self.labelList == None:
+            self.labelList = []
+            for i in range(len(array)):
+                self.labelList.append('No Label Given')
+
+        if self.integrationTimeList == None:
+            self.integrationTimeList = []
+            for i in range(len(array)):
+                self.integrationTimeList.append(1)
+
+        assert len(array) == len(self.labelList) == len(self.integrationTimeList), 'Arguments given must all be the same length'
+        assert len(x) == len(array[0]), 'x must be an array containing as many element as each array element'
+
+        self._prepareSpectraList()
+
+
+    def _prepareSpectraList(self):
+        self.spectra = []
+        for i in range(len(self.data)):
+            spectrum = Spectrum(self.x, self.data[i], self.integrationTimeList[i], self.labelList[i])
+            self.spectra.append(spectrum)
+
+
+    def asSpectra(self):
+        self._prepareSpectraList()
+        spectra = []
+        for spectrum in self.spectra:
+            spectra.append(spectrum)
+        return Spectra(spectra)
+
+
+    def cleanLabel(self, keyPos):
+        # keyPos is the position of the element of interest in original label
+        newLabels = []
+        for label in self.labelList:
+            key = ''
+            for i in keyPos:
+                key += label.split('-')[i]
+            newLabels.append(key)
+        self.labelList = newLabels
+
+
+
+
 class Spectrum:
     def __init__(self, wavelenghts, counts, integrationTime, label):
         self.wavelenghts = wavelenghts
@@ -412,7 +465,9 @@ class Spectrum:
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
         if WN == True:
             xlabel = 'Wavenumber [cm-1]'
-            plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
+            # plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
+            plt.plot(self.wavenumbers, self.counts,  label=self.label)
+
         if WN == False:
             plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + 'IT: {0} s'.format(self.integrationTime))
         if NoX == True:
@@ -578,21 +633,27 @@ class Spectra:
         self.SV = []
         self.PCA = None
         self.data = []
+        self.labelList = []
 
         self._loadData()
 
+
     def _loadData(self):
         self.data = []
+        self.labelList = []
 
         for spectrum in self.spectra:
             spectrum_features = np.array(spectrum.counts)
+            spectrum_label = spectrum.label
             self.data.append(spectrum_features)
+            self.labelList.append(spectrum_label)
 
 
     def display(self, WN=True):
         if WN == False:
             for spectrum in self.spectra:
                 plt.plot(spectrum.wavelenghts, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime) + ' s')
+
         if WN == True:
             for spectrum in self.spectra:
                 plt.plot(spectrum.wavenumbers, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime) + ' s')
@@ -626,6 +687,22 @@ class Spectra:
             spectrum.normalizeCounts()
 
 
+    def _getSpectraSum(self):
+        datashape = np.shape(self.spectra[0].counts)
+        sum = np.zeros(datashape)
+        for spectrum in self.spectra:
+            sum += spectrum.counts
+        self.spectraSum = sum
+
+
+    def _getSpectraAVG(self):
+        datashape = np.shape(self.spectra[0].counts)
+        AVG = np.zeros(datashape)
+        for spectrum in self.spectra:
+            AVG += (np.array(spectrum.counts) / len(self.spectra))
+        self.spectraAVG = AVG
+
+
     def add(self, *items):
         for item in items:
             assert type(item) == Spectrum or Spectra, 'Expecting a Spectra or Spectrum type argument'
@@ -648,16 +725,42 @@ class Spectra:
 
 
 
-    def pca(self, nbOfComp = 10):
+    def pca(self, nbOfComp = 10, SC=False):
         self._loadData()
+        data = self.data
+        if SC == True:
+            self._standardizeData()
+            data = self.SCData
 
         self.PCA = PCA(n_components=nbOfComp)
-        self.PCA.fit(self.data)
+        self.PCA.fit(data)
 
         for i in range(nbOfComp):
             self.SV.append(self.PCA.singular_values_[i])
             self.EVR.append(self.PCA.explained_variance_ratio_[i])
             self.PC.append(Spectrum(self.spectra[0].wavelenghts, self.PCA.components_[i], 1, 'PC{0}, val propre = {1}'.format(i + 1, self.PCA.explained_variance_ratio_[i])))
+
+
+    def subtractPCToData(self, PC):
+        self._getSpectraAVG()
+        self._getPCAdf()
+        PCSpectrum = self.PC[PC - 1].counts
+        PCEigVal = []
+        print(self.pca_df)
+
+        for EV in range(len(self.data)):
+            PCEigVal.append(self.pca_df.iat[EV, PC - 1])
+        print(PCEigVal)
+
+        newData = []
+        for i in range(len(self.data)):
+            newData.append(self.data[i] - (PCEigVal[i] * PCSpectrum) - self.spectraAVG)
+            # plt.plot(self.data[i], label='A spectrum')
+            # plt.plot(newData[i], label="A spectrum - it's PC1")
+            # plt.legend()
+            # plt.show()
+
+        return newData
 
 
     def pcaDisplay(self, *PCs):
@@ -672,29 +775,40 @@ class Spectra:
         plt.show()
 
 
-    def pcaScatterPlot(self, PCx, PCy=None, PCz=None):
+    def _getPCAdf(self, SC=False):
         self._loadData()
+        data = self.data
 
-        pca_data = self.PCA.fit_transform(self.data)
-        labels = []
-        columns = []
+        if SC == True:
+            self._standardizeData()
+            data = self.SCData
+
+        pca_data = self.PCA.fit_transform(data)
+        print(pca_data)
+        self.PCAlabels = []
+        self.PCAcolumns = []
 
         for spectrum in self.spectra:
-            labels.append(spectrum.label)
+            self.PCAlabels.append(spectrum.label)
 
         for PC in range(len(self.PC)):
-            columns.append('PC{0}'.format(PC + 1))
+            self.PCAcolumns.append('PC{0}'.format(PC + 1))
 
-        df = pd.DataFrame(pca_data, index=labels, columns=columns)
+        self.pca_df = pd.DataFrame(pca_data, index=self.PCAlabels, columns=self.PCAcolumns)
+
+
+    def pcaScatterPlot(self, PCx, PCy=None, PCz=None, SC=False):
+        self._loadData()
+        self._getPCAdf()
 
         if PCy == None and PCz == None:
-            fig = px.scatter(df, x='PC{0}'.format(PCx), color=labels)
+            fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels)
 
         if PCz == None and PCy != None:
-            fig = px.scatter(df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=labels)
+            fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels)
 
         if PCy != None and PCz != None:
-            fig = px.scatter_3d(df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=labels)
+            fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=self.PCAlabels)
 
         plot(fig)
 
@@ -736,7 +850,107 @@ class Spectra:
             spectrum.fixSpec()
 
 
+    def _standardizeData(self):
+        self.SCData = StandardScaler().fit_transform(self.data)
 
+
+    def lda(self, n_components=2, SC=False):
+        self._loadData()
+
+        assert len(self.data) == len(self.labelList), "'data' and 'label' arrays must be the same lenght"
+
+        data = self.data
+
+        if SC == True:
+            self._standardizeData()
+            assert len(self.SCData) == len(self.labelList), "'SCdata' and 'label' arrays must be the same lenght"
+            data = self.SCData
+
+        self.LDA = LinearDiscriminantAnalysis(n_components=n_components)
+        self.LDA.fit(data, self.labelList)
+
+        print('coefs: ', self.LDA.coef_)
+        print('intercept: ', self.LDA.intercept_)
+        # print('covariance: ', self.LDA.covariance_)
+        print('explained variance ratio: ', self.LDA.explained_variance_ratio_)
+        print('means: ', self.LDA.means_)
+        print('priors: ', self.LDA.priors_)
+        print('scalings: ', np.shape(self.LDA.scalings_), self.LDA.scalings_)
+        print('xbar: ', self.LDA.xbar_)
+        print('classes: ', self.LDA.classes_)
+        print('features: ', self.LDA.n_features_in_)
+        # print('features names: ', self.LDA.feature_names_in_)
+
+
+        # plt.plot(self.LDA.scalings_.T[0], label='scaling transposed 1')
+        # plt.plot(self.LDA.scalings_.T[1], label='scaling transposed 2')
+        # plt.plot(self.LDA.scalings_.T[2], label='scaling transposed 3')
+        # plt.plot(self.LDA.scalings_.T[3], label='scaling transposed 4')
+        # plt.plot(self.LDA.scalings_.T[4], label='scaling transposed 5')
+        # plt.legend()
+        # plt.title('scaling transposed')
+        # plt.show()
+
+
+        # plt.plot(self.spectra[0].counts)
+        # plt.title('spectrum :' + self.spectra[0].label)
+        # plt.show()
+
+        # plt.plot(self.LDA.coef_[0], label='coef 1')
+        # plt.plot(self.LDA.coef_[1], label='coef 2')
+        # plt.plot(self.LDA.coef_[2], label='coef 3')
+        # plt.plot(self.LDA.coef_[3], label='coef 4')
+        # plt.plot(self.LDA.coef_[4], label='coef 5')
+        # plt.plot(self.LDA.coef_[5], label='coef 6')
+        # plt.legend()
+        # plt.title('LDA coefficients')
+        # plt.show()
+
+        # plt.plot(self.LDA.means_[0], label='mean 1')
+        # plt.plot(self.LDA.means_[1], label='mean 2')
+        # plt.plot(self.LDA.means_[2], label='mean 3')
+        # plt.plot(self.LDA.means_[3], label='mean 4')
+        # plt.plot(self.LDA.means_[4], label='mean 5')
+        # plt.plot(self.LDA.means_[5], label='mean 6')
+        # plt.legend()
+        # plt.title('LDA means')
+        # plt.show()
+
+        # plt.plot(self.LDA.xbar_, label='xbar')
+        # plt.title('xbar')
+        # plt.show()
+
+
+    def ldaScatterPlot(self, LDx, LDy=None, LDz=None, SC=False):
+        self._loadData()
+
+        data = self.data
+        if SC == True:
+            self._standardizeData()
+            data = self.SCData
+
+        lda_data = self.LDA.fit_transform(data, self.labelList)
+        labels = []
+        columns = []
+
+        for spectrum in self.spectra:
+            labels.append(spectrum.label)
+
+        for LD in range(self.LDA.n_components):
+            columns.append('LD{0}'.format(LD + 1))
+
+        self.lda_df = pd.DataFrame(lda_data, index=labels, columns=columns)
+
+        if LDy == None and LDz == None:
+            fig = px.scatter(self.lda_df, x='LD{0}'.format(LDx), color=labels)
+
+        if LDz == None and LDy != None:
+            fig = px.scatter(self.lda_df, x='LD{0}'.format(LDx), y='LD{0}'.format(LDy), color=labels)
+
+        if LDy != None and LDz != None:
+            fig = px.scatter_3d(self.lda_df, x='LD{0}'.format(LDx), y='LD{0}'.format(LDy), z='LD{0}'.format(LDz), color=labels)
+
+        plot(fig)
 
 
 

@@ -9,8 +9,8 @@ import os
 
 bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/10min_0light/').spectraSum()
 
-# watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
-# watersum.removeThermalNoise(bg)
+watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
+watersum.removeThermalNoise(bg)
 # watersum.normalizeCounts()
 # watersum.polyfit(6)
 
@@ -19,11 +19,11 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # water.normalizeCounts()
 # water.display()
 
-# GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/').spectra()
+# GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/GABA/').spectraSum()
 # GABA.removeThermalNoise(bg)
 # GABA.polyfit(6)
 # GABA.subtract(watersum)
-# GABAsum.display()
+# GABA.display()
 # GABAsum.normalizeCounts()
 # GABAsum.subtract(water)
 # GABAsum.fftFilter()
@@ -32,7 +32,7 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 
 
 
-# dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectra()
+# dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectraSum()
 # dopamine.removeThermalNoise(bg)
 # dopamine.polyfit(6)
 # dopamine.subtract(watersum)
@@ -84,14 +84,14 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 
 
 # GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/PM/cm_30sec_lightoff_1A_2/').spectraSum()
-# water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
+water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
 #
 # x = GABA.counts
 # GABA.removeThermalNoise(bg)
 # GABA.normalizeIntegration()
 # water.removeThermalNoise(bg)
 # water.normalizeCounts()
-
+# GABA.display(WN=False)
 # water.display()
 
 # plt.plot(GABA.wavenumbers, GABA.counts)
@@ -117,7 +117,7 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # iso1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
 # iso2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220421/iso/').spectraSum()
 # iso3 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
-#
+# iso3.display(WN=False)
 # iso2.fixSpec()
 #
 # iso2.setZero(20)
@@ -143,11 +143,13 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 # plt.legend()
 # plt.show()
 
-# GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/GABA_100mM/').spectraSum()
+GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/GABA_100mM/').spectraSum()
 # water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
-# water1.removeThermalNoise(bg)
+water1.removeThermalNoise(bg)
 # water1.normalizeCounts()
-# GABA.removeThermalNoise(bg)
+GABA.removeThermalNoise(bg)
+GABA.subtract(water1)
+GABA.display()
 # GABA.normalizeCounts()
 # water.removeThermalNoise(bg)
 # water.normalizeCounts()
@@ -187,28 +189,45 @@ bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/1
 
 # data spectro shifted
 # iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
-# iso_good = iso_good.spectra[0]
-# iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
 #
+# x = iso_good.spectra[0].wavelenghts
+# label = []
+# for i in iso_good.spectra[:]:
+#     label.append(i.label)
+# integ = iso_good.spectra[:3]
+# iso_good = np.array(iso_good.data)
+
+
+# new_good = spectrum.ArrayToSpectra(x, iso_good, label=label).spectra
+#
+# new_good = spectrum.Spectra(new_good)
+# new_good.display()
+
+# iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
+# iso_bad.display()
 # plt.plot(iso_good.wavenumbers, iso_good.counts, 'k', label='Before crash')
 # plt.plot(iso_bad.wavenumbers, iso_bad.counts, 'r', label='After crash')
 # plt.legend()
 # plt.show()
 
-path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
 
-data = []
-for dir in os.listdir(path):
-    if dir[0] == '.':
-        continue
-    data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
-
-data = spectrum.Spectra(data)
+# path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
+#
+# data = []
+# for dir in os.listdir(path):
+#     if dir[0] == '.':
+#         continue
+#     data.append(spectrum.Acquisition(path + dir + '/', fileType='USB2000').spectra())
+#
+# data = spectrum.Spectra(data)
 # data.removeThermalNoise(bg)
-data.pca()
-data.pcaDisplay(1, 2)
-data.pcaScatterPlot(PCx=1, PCy=2)
-
+# data.pca()
+# data.pcaDisplay(1, 2)
+# data.pcaScatterPlot(PCx=1, PCy=2)
+# data.lda(SC=True, n_components=3)
+# data.ldaScatterPlot(2, 3, SC=True)
+# data.pca(SC=True)
+# data.pcaScatterPlot(1, 2, SC=True)
 
 
 
@@ -261,4 +280,64 @@ data.pcaScatterPlot(PCx=1, PCy=2)
 # plt.legend()
 # plt.xlabel('Distance from focal spot [um]')
 # plt.ylabel('Relative Intensity [-]')
+# plt.show()
+
+
+
+
+
+# from dcclab.database import *
+#
+# db = SpectraDB()
+# db.describeDatasets()
+# datasetId = "DRS-003"
+# spectra, spectrumIds = db.getSpectra(datasetId=datasetId)
+# spectra = spectra.T
+# frequency = db.getFrequencies(datasetId=datasetId)
+#
+# data = spectrum.ArrayToSpectra(frequency, spectra, label=spectrumIds)
+# data.cleanLabel([2])
+# data = data.asSpectra()
+
+# data.display()
+# data.pca()
+# dumbo = data.subtractPCToData(1)
+# newdata = spectrum.ArrayToSpectra(frequency, dumbo, label=spectrumIds)
+# newdata.cleanLabel([2])
+# newdata = newdata.asSpectra()
+# newdata.pca()
+# newdata.pcaDisplay(1, 2, 3)
+# data.pcaDisplay(2, 3, 4)
+# data.pcaScatterPlot(1, 2)
+
+# data.lda(n_components=1, SC=True)
+# data.ldaScatterPlot(1, SC=True)
+
+
+# from dcclab.database import *
+# from scipy.signal import savgol_filter
+#
+# db = SpectraDB()
+#
+# datasetId = "SHAVASANA-001"
+# db.describeDatasets(datasetId=datasetId)  # if needed, look at it
+#
+# print("\nCurrently in the database, validated ids are   : ")
+# print("================================================")
+# values = db.getPossibleIdValues(datasetId)
+# for genericIdLabel in ["id1", "id2", "id3", "id4"]:
+#     print("'{0}' is one of {1}".format(genericIdLabel, values[genericIdLabel]))
+#
+# spectraGroup = []
+# for i in range(2,42):
+#     spectra = db.getSpectralDataFrame(datasetId= "SHAVASANA-001", id1= "CARS", id2= "RSTN", distance=i)
+#     spectra = np.sum(spectra, axis=1)
+#     spectra = savgol_filter(spectra, 25, 2)
+#     spectraGroup.append(spectra)
+# frequency = db.getFrequencies(datasetId= "SHAVASANA-001", id1="CARS")
+#
+# plt.plot(frequency, np.transpose(spectraGroup))
+# plt.show()
+#
+# plt.plot(frequency, np.sum(np.transpose(spectraGroup), axis=1))
 # plt.show()
