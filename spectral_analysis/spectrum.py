@@ -11,6 +11,8 @@ from plotly.offline import plot
 import pandas as pd
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
+import plotly.graph_objs as go
+import scipy.optimize
 
 
 
@@ -399,6 +401,12 @@ class ArrayToSpectra:
             for i in range(len(array)):
                 self.labelList.append('No Label Given')
 
+        if type(self.labelList) == str:
+            self.labelList = []
+            for i in range(len(array)):
+                self.labelList.append(label)
+
+
         if self.integrationTimeList == None:
             self.integrationTimeList = []
             for i in range(len(array)):
@@ -437,7 +445,6 @@ class ArrayToSpectra:
 
 
 
-
 class Spectrum:
     def __init__(self, wavelenghts, counts, integrationTime, label):
         self.wavelenghts = wavelenghts
@@ -452,6 +459,7 @@ class Spectrum:
         if exist == True:
             self.wavenumbers = None
 
+
     def getSNR(self, bgStart=550, bgEnd=800):
         if len(self.counts) <= bgStart:
             return None, None, None
@@ -463,15 +471,15 @@ class Spectrum:
 
 
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
-        if WN == True:
+        if WN == True and NoX == False:
             xlabel = 'Wavenumber [cm-1]'
-            # plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
-            plt.plot(self.wavenumbers, self.counts,  label=self.label)
+            plt.plot(self.wavenumbers, self.counts,  label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
+            # plt.plot(self.wavenumbers, self.counts,  label=self.label)
 
-        if WN == False:
-            plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + 'IT: {0} s'.format(self.integrationTime))
+        if WN == False and NoX == False:
+            plt.plot(self.wavelenghts, self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
         if NoX == True:
-            plt.plot(self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = ' + str(self.getSNR()[1])[:7] + 'IT: {0} s'.format(self.integrationTime))
+            plt.plot(self.counts, label=self.label + ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = ' + str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime))
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
@@ -511,6 +519,10 @@ class Spectrum:
 
     def normalizeCounts(self):
         self.counts = list(np.array(self.counts) / np.amax(self.counts))
+
+
+    def normalizeTime(self):
+        self.counts = list(np.array(self.counts) / self.integrationTime)
 
 
     def addSpectra(self, spectraToAdd):
@@ -570,55 +582,129 @@ class Spectrum:
         return Spectrum(self.wavenumbers, y_fit, self.integrationTime, label)
 
 
-    def fftFilter(self):
-        # should change self.counts so it
-        d = (self.wavenumbers[-1] - self.wavenumbers[0]) / len(self.wavenumbers)
-        fhat = np.fft.fft(self.counts, len(self.counts))
-        PSD = fhat * np.conj(fhat) / len(self.counts)
-        freq = (1 / (d * len(self.counts))) * np.arange(len(self.counts))
-        L = np.arange(1, np.floor(len(self.counts)/2), dtype='int')
+    def fft(self, show=False, replace=False, return_fit=False, fc=0.001, b=0.04, shift=54):
 
-        PSDtreated = PSD
-        val = 515
-        #   Highpass
-        # PSDtreated[:val] = 0
-        # fhat[:val] = 0
-        # fhat[-val:] = 0
-        #   Lowpass
-        PSDtreated[-val:] = 0
-        fhat[int(((len(fhat) / 2) - val)): int((len(fhat) / 2))] = 0
-        fhat[int((len(fhat) / 2)): int(((len(fhat) / 2) + val))] = 0
-        ffilt = np.fft.ifft(fhat)
+        # b = 0.08
+        N = int(np.ceil((4 / b)))
+        if not N % 2: N += 1
+        n = np.arange(N)
 
+        sinc_func = np.sinc(2 * fc * (n - (N - 1) / 2.))
+        window = 0.42 - 0.5 * np.cos(2 * np.pi * n / (N - 1)) + 0.08 * np.cos(4 * np.pi * n / (N - 1))
+        sinc_func = sinc_func * window
+        sinc_func = sinc_func / np.sum(sinc_func)
 
-        plt.plot(freq[L], PSDtreated[L])
-        plt.show()
+        self.fft_fit = np.convolve(self.counts, sinc_func)[shift:]
+        self.fftFilteredCounts = np.array(self.counts) - np.array(self.fft_fit)[:len(self.counts)]
 
-        plt.plot(self.wavenumbers, ffilt, 'r')
-        plt.plot(self.wavenumbers, self.counts, 'k')
-        plt.show()
+        trace1 = go.Scatter(
+            x=list(range(len(self.fft_fit))),
+            y=self.counts,
+            mode='lines',
+            name='Raw',
+            line=dict(
+                color='#000000',
+                # dash='dash'
+            )
+        )
+        trace2 = go.Scatter(
+            x=list(range(len(self.fft_fit))),
+            y=self.fft_fit,
+            mode='lines',
+            name='FFT Fit',
+            marker=dict(
+                color='#0000FF'
+            )
+        )
 
-        plt.plot(self.wavenumbers, (self.counts - ffilt))
-        plt.show()
+        layout = go.Layout(
+            title='Low-Pass Filter',
+            showlegend=True
+        )
+
+        trace_data = [trace1, trace2]
+        fig = go.Figure(data=trace_data, layout=layout)
+
+        if show == True:
+            fig.show()
+            plt.plot(self.wavenumbers, self.fftFilteredCounts)
+            plt.show()
+
+        if replace == True:
+            self.counts = self.fftFilteredCounts
+
+        if return_fit == True:
+            return Spectrum(self.wavelenghts[:len(self.counts)], self.fft_fit[:len(self.counts)], self.integrationTime, 'fft_fit')
 
 
     def setZero(self, val):
         self.counts[0:val] = 0
 
 
-    def fixSpec(self):
-        x = np.array(self.wavenumbers)
-        x = x - 85
-        self.wavenumbers = x
+    #works for data acquired on 20220802 for 10 sec integration in monkey brain samples in PBS
+    def fixAberations(self, threshold=3.5, display=False):
+        count = 0
+        for i in range(2, len(self.counts) - 2):
+            bef = self.counts[i - 1]
+            at = self.counts[i]
+            aft = self.counts[i + 1]
+            edge_avg = (bef + aft) / 2
 
-        for i in range(len(self.wavenumbers)):
-            self.wavenumbers[i] = self.wavenumbers[i] + 10 * ((self.wavenumbers[i]) / 747)
+            if (at - edge_avg) > (threshold * np.sqrt(edge_avg)) and at > (bef and aft) and abs(at - bef) > abs(bef - self.counts[i - 2]):
+                count += 1
+                self.counts[i] = edge_avg
+        if display == True:
+            print('{0} pixel values have been changed'.format(count))
 
 
     def smooth(self):
         for i in range(1, len(self.counts) - 1):
             val = (self.counts[i - 1] + self.counts[i] + self.counts[i + 1]) / 3
             self.counts[i] = val
+
+
+    def cut(self, start, end, WN=False, WL=False):
+        if WN == False and WL == False:
+            self.wavenumbers = self.wavenumbers[start: end]
+            self.wavelenghts = self.wavelenghts[start: end]
+            self.counts = self.counts[start: end]
+
+        if WN == True and WL == True:
+            raise TypeError('WN and WL must not be True at the same time. Only one or none of them should be True')
+
+        if WN == True and WL == False:
+            WN = list(self.wavenumbers)
+
+            ADF_s = lambda list_value: abs(list_value - start)
+            ADF_e = lambda list_value: abs(list_value - end)
+
+            CV_s = min(WN, key=ADF_s)
+            CV_e = min(WN, key=ADF_e)
+
+            WN_start = WN.index(CV_s)
+            WN_end = WN.index(CV_e)
+
+            self.wavenumbers = self.wavenumbers[WN_start: WN_end]
+            self.wavelenghts = self.wavelenghts[WN_start: WN_end]
+            self.counts = self.counts[WN_start: WN_end]
+
+
+
+        if WN == False and WL == True:
+            WL = list(self.wavelenghts)
+
+            ADF_s = lambda list_value : abs(list_value - start)
+            ADF_e = lambda list_value : abs(list_value - end)
+
+            CV_s = min(WL, key=ADF_s)
+            CV_e = min(WL, key=ADF_e)
+
+            WL_start = WL.index(CV_s)
+            WL_end = WL.index(CV_e) + 1
+
+            self.wavenumbers = self.wavenumbers[WL_start: WL_end]
+            self.wavelenghts = self.wavelenghts[WL_start: WL_end]
+            self.counts = self.counts[WL_start: WL_end]
 
 
 
@@ -649,16 +735,98 @@ class Spectra:
             self.labelList.append(spectrum_label)
 
 
-    def display(self, WN=True):
+    def sumSpec(self):
+        new_counts = np.empty(np.shape(self.spectra[0].counts))
+        integration_time = 0
+        label = ''
+        for spectrum in self.spectra:
+            new_counts += spectrum.counts
+            integration_time += spectrum.integrationTime
+            label += spectrum.label + ', '
+
+        return Spectrum(self.spectra[0].wavelenghts, new_counts, integration_time, label)
+
+
+    def display(self, WN=True, label=True):
         if WN == False:
             for spectrum in self.spectra:
-                plt.plot(spectrum.wavelenghts, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime) + ' s')
+                plt.plot(spectrum.wavelenghts, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                plt.xlabel('Wavelenghts [nm]')
 
         if WN == True:
             for spectrum in self.spectra:
-                plt.plot(spectrum.wavenumbers, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime) + ' s')
+                plt.plot(spectrum.wavenumbers, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                plt.xlabel('Wavenumbers [cm-1]')
 
-        plt.legend()
+        plt.ylabel('Counts [-]')
+        if label==True:
+            plt.legend()
+        plt.show()
+
+
+    def display2Colored(self, label1, label2, WN=True, display_label=True):
+        if WN == False:
+            for spectrum in self.spectra:
+                if spectrum.label == label1:
+                    plt.plot(spectrum.wavelenghts, spectrum.counts, 'k',
+                            label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavelenghts [nm]')
+                if spectrum.label == label2:
+                    plt.plot(spectrum.wavelenghts, spectrum.counts, 'r',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavelenghts [nm]')
+
+        if WN == True:
+            for spectrum in self.spectra:
+                if spectrum.label == label1:
+                    plt.plot(spectrum.wavenumbers, spectrum.counts, 'k',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavenumbers [cm-1]')
+                if spectrum.label == label2:
+                    plt.plot(spectrum.wavenumbers, spectrum.counts, 'r',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavenumbers [cm-1]')
+
+        plt.ylabel('Counts [-]')
+        if display_label == True:
+            plt.legend()
+        plt.show()
+
+
+    def display3Colored(self, label1, label2, label3, WN=True, display_label=True):
+        if WN == False:
+            for spectrum in self.spectra:
+                if spectrum.label == label1:
+                    plt.plot(spectrum.wavelenghts, spectrum.counts, 'k',
+                            label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavelenghts [nm]')
+                if spectrum.label == label2:
+                    plt.plot(spectrum.wavelenghts, spectrum.counts, 'r',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavelenghts [nm]')
+                if spectrum.label == label3:
+                    plt.plot(spectrum.wavelenghts, spectrum.counts, 'b',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavelenghts [nm]')
+
+        if WN == True:
+            for spectrum in self.spectra:
+                if spectrum.label == label1:
+                    plt.plot(spectrum.wavenumbers, spectrum.counts, 'k',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavenumbers [cm-1]')
+                if spectrum.label == label2:
+                    plt.plot(spectrum.wavenumbers, spectrum.counts, 'r',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavenumbers [cm-1]')
+                if spectrum.label == label3:
+                    plt.plot(spectrum.wavenumbers, spectrum.counts, 'b',
+                             label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    plt.xlabel('Wavenumbers [cm-1]')
+
+        plt.ylabel('Counts [-]')
+        if display_label == True:
+            plt.legend()
         plt.show()
 
 
@@ -667,7 +835,7 @@ class Spectra:
             spectrum.removeThermalNoise(TNToRemove)
 
 
-    def subtract(self, specToSub, specToSub_AcqTime=None):
+    def subtract(self, specToSub, specToSub_AcqTime=1):
         if type(specToSub) != Spectrum:
             for spectrum in self.spectra:
                 spectrum.counts = list(np.array(spectrum.counts) - (spectrum.integrationTime * np.array(specToSub) / specToSub_AcqTime))
@@ -675,6 +843,16 @@ class Spectra:
         if type(specToSub) == Spectrum:
             for spectrum in self.spectra:
                 spectrum.counts = list(np.array(spectrum.counts) - (spectrum.integrationTime * np.array(specToSub.counts) / specToSub.integrationTime))
+
+
+    def smooth(self):
+        for spectrum in self.spectra:
+            spectrum.smooth()
+
+
+    def fixAberations(self):
+        for spectrum in self.spectra:
+            spectrum.fixAberations()
 
 
     def normalizeIntegration(self):
@@ -685,6 +863,11 @@ class Spectra:
     def normalizeCounts(self):
         for spectrum in self.spectra:
             spectrum.normalizeCounts()
+
+
+    def normalizeTime(self):
+        for spectrum in self.spectra:
+            spectrum.normalizeTime()
 
 
     def _getSpectraSum(self):
@@ -723,6 +906,10 @@ class Spectra:
                 after = len(self.spectra)
                 assert after == before + 1, 'The spectrum that was supposed to be added to this object has not been properly added'
 
+
+    def cut(self, start, end, WN=False, WL=False):
+        for Spectrum in self.spectra:
+            Spectrum.cut(start, end, WN, WL)
 
 
     def pca(self, nbOfComp = 10, SC=False):
@@ -763,8 +950,7 @@ class Spectra:
         return newData
 
 
-    def pcaDisplay(self, *PCs):
-        WN = False
+    def pcaDisplay(self, *PCs, WN=False):
         if WN == True:
             for PC in PCs:
                 plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
@@ -784,7 +970,6 @@ class Spectra:
             data = self.SCData
 
         pca_data = self.PCA.fit_transform(data)
-        print(pca_data)
         self.PCAlabels = []
         self.PCAcolumns = []
 
@@ -830,6 +1015,7 @@ class Spectra:
             print('WL: {3},mean: {0}, STD: {1}, ratio: {2}'.format(mean, STD, ratio, WL))
 
         plt.plot(self.spectra[0].wavelenghts, ratios)
+        plt.plot(self.spectra[0].wavelenghts, np.array(self.spectra[0].counts)/600)
         plt.xlabel('Wavelenghts [cm-1]')
         plt.ylabel('Ratio [photons / counts]')
         plt.show()
@@ -845,13 +1031,18 @@ class Spectra:
             spectrum.setZero(val)
 
 
-    def fixSpec(self):
-        for spectrum in self.spectra:
-            spectrum.fixSpec()
+    # def fixSpec(self):
+    #     for spectrum in self.spectra:
+    #         spectrum.fixSpec()
 
 
     def _standardizeData(self):
         self.SCData = StandardScaler().fit_transform(self.data)
+
+
+    def fft(self, replace=False, show=False):
+        for spectrum in self.spectra:
+            spectrum.fft(replace=replace, show=show)
 
 
     def lda(self, n_components=2, SC=False):

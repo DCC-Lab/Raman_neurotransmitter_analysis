@@ -1,5 +1,5 @@
 import numpy as np
-
+from dcclab.database import *
 import spectrum
 import matplotlib.pyplot as plt
 import os
@@ -8,9 +8,11 @@ import os
 # A NEW ERA HAS BEGUN!!!!!!!!!!!!!!!!!!!!!!!
 
 bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/10min_0light/').spectraSum()
+nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectraSum()
 
-watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
-watersum.removeThermalNoise(bg)
+
+# watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
+# watersum.removeThermalNoise(bg)
 # watersum.normalizeCounts()
 # watersum.polyfit(6)
 
@@ -34,9 +36,12 @@ watersum.removeThermalNoise(bg)
 
 # dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220315/dopamine/').spectraSum()
 # dopamine.removeThermalNoise(bg)
+# water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
+# water.removeThermalNoise(bg)
 # dopamine.polyfit(6)
 # dopamine.subtract(watersum)
-# dopamine.subtract(water)
+# dopamine.subtract(watersum)
+# dopamine.normalizeCounts()
 # dopamine.display()
 
 # plt.plot(dopamine.wavenumbers, y1, label='dopamine raw')
@@ -57,9 +62,10 @@ watersum.removeThermalNoise(bg)
 # iso100full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
 # iso300full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/300ms_iso/').spectra()
 # iso100half = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso_halfpower/').spectra()
-#
-# iso100full.removeThermalNoise(bg)
-# iso100full.getSTD()
+
+# iso300full.removeThermalNoise(bg)
+# iso100full.cut(100, None)
+# iso300full.getSTD()
 
 
 # Erika data
@@ -84,7 +90,7 @@ watersum.removeThermalNoise(bg)
 
 
 # GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/PM/cm_30sec_lightoff_1A_2/').spectraSum()
-water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
+# water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
 #
 # x = GABA.counts
 # GABA.removeThermalNoise(bg)
@@ -143,21 +149,27 @@ water1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').
 # plt.legend()
 # plt.show()
 
-GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/GABA_100mM/').spectraSum()
-# water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/water/').spectraSum()
-water1.removeThermalNoise(bg)
-# water1.normalizeCounts()
-GABA.removeThermalNoise(bg)
-GABA.subtract(water1)
-GABA.display()
+# GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220420/GABA_100mM/').spectraSum()
+
+# water.normalizeCounts()
+# GABA.removeThermalNoise(bg)
+# GABA.subtract(water)
+# GABA.display()
 # GABA.normalizeCounts()
 # water.removeThermalNoise(bg)
 # water.normalizeCounts()
 
 
 
-# plt.plot(GABA.wavenumbers, GABA.counts, label='GABA')
-# plt.plot(water.wavenumbers, water.counts, label='water')
+#
+# plt.plot(GABA.wavenumbers, GABA.counts, 'r', label='GABA')
+# plt.plot(dopamine.wavenumbers, dopamine.counts, 'k', label='Dopamine')
+# plt.ylim(0, 1.03)
+# plt.rcParams.update({'font.size': 24})
+# plt.xticks(fontsize=24)
+# plt.yticks(fontsize=24)
+# plt.xlabel('Wavenumbers [cm-1]', fontsize=24)
+# plt.ylabel('Normalized counts [-]', fontsize=24)
 # plt.legend()
 # plt.show()
 
@@ -188,7 +200,11 @@ GABA.display()
 
 
 # data spectro shifted
-# iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
+iso_new = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220627/').spectra()
+# iso_new.display()
+# iso_new.normalizeIntegration()
+
+iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
 #
 # x = iso_good.spectra[0].wavelenghts
 # label = []
@@ -203,12 +219,44 @@ GABA.display()
 # new_good = spectrum.Spectra(new_good)
 # new_good.display()
 
-# iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectraSum()
+# constant = []
+# for i in range(16):
+#     constant.append(40)
+#
+iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectra()
+# iso_bad = iso_bad.spectra[300]
+# plt.plot(iso_bad.counts[190:205])
+# plt.plot(constant, '--k')
+# # plt.show()
+#
+# integration = 0
+# for i in iso_bad.counts[190:205]:
+#     integration += i - 40
+#
+# print(integration)
+# iso_bad.normalizeIntegration()
 # iso_bad.display()
-# plt.plot(iso_good.wavenumbers, iso_good.counts, 'k', label='Before crash')
-# plt.plot(iso_bad.wavenumbers, iso_bad.counts, 'r', label='After crash')
+# plt.plot(iso_new.wavenumbers, iso_new.counts, 'k-', label='New')
+# plt.plot(iso_bad.wavenumbers, iso_bad.counts, 'r-', label='After crash')
 # plt.legend()
 # plt.show()
+
+# bad = iso_bad
+# old = iso_good
+# new = iso_new
+# bad.cut(100, None)
+# old.cut(100, None)
+# new.cut(100, None)
+# plt.plot(old.spectra[0].wavelenghts, old.spectra[0].counts, 'k', label='Old')
+# plt.plot(bad.spectra[0].wavelenghts, bad.spectra[0].counts, 'r', label='"Broken"')
+# plt.plot(new.spectra[0].wavelenghts, new.spectra[0].counts, 'b', label='Repaired')
+# plt.xlabel('Wavelenghts [nm]', fontsize=24)
+# plt.ylabel('Counts [-]', fontsize=24)
+# plt.xticks(fontsize=24)
+# plt.yticks(fontsize=24)
+# plt.legend()
+# plt.show()
+
 
 
 # path = '/Users/antoinerousseau/Downloads/PegahAndAlexExperiment/'
@@ -341,3 +389,124 @@ GABA.display()
 #
 # plt.plot(frequency, np.sum(np.transpose(spectraGroup), axis=1))
 # plt.show()
+
+
+
+# x=[35, 100, 150, 200]
+# y1=[1800, 1480, 1375, 1130]
+# y1_norm = [1, 1480/1800, 1375/1800, 1130/1800]
+#
+# denom = 1800/58
+# y2=[1, 1480/51/denom, 1375/45/denom, 1130/43/denom]
+#
+# plt.plot(x, y1_norm, 'k', label='Intensity Normalized')
+# plt.plot(x, y2, 'r', label='Relative Intensity Normalized')
+# plt.legend()
+# plt.xlabel('f of L2 in the 4F (L1: 35mm)')
+# plt.show()
+
+
+
+# A = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220711/L3ASH17.5/').spectraSum()
+# B = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220711/L3ASH17.5L4ASH/').spectraSum()
+# C = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220711/L4ACH50/').spectraSum()
+# D = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220711/L4ASH40F/').spectraSum()
+# E = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220711/L4ASH50/').spectraSum()
+# data = A.addSpectra(B)
+# data.add(C, D, E)
+# data.cut(30, None)
+# data.display()
+
+#-------------------------------------------------------------
+# data brain monkey gris et blanc
+
+# NoLens = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/noL1L2_iso/').spectraSum()
+# WithLens = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/optim_iso/').spectraSum()
+# pbs1 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/pbs1/').spectraSum()
+# pbs2 = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/pbs2/').spectraSum()
+# grey = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/gris/').spectra()
+# white = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectra()
+#
+# g_sum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/gris/').spectraSum()
+# g_sum.removeThermalNoise(nbg)
+# g_sum.cut(30, -4)
+# g_fit = g_sum.fft(return_fit=True, b=0.02, shift=105)
+# grey.removeThermalNoise(nbg)
+# grey.cut(30, -4)
+# grey.fixAberations()
+# grey.subtract(g_fit)
+#
+#
+# w_sum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectraSum()
+# w_sum.removeThermalNoise(nbg)
+# w_sum.cut(30, -4)
+# w_sum.fixAberations()
+# w_fit = w_sum.fft(return_fit=True, b=0.02, shift=105)
+# white.removeThermalNoise(nbg)
+# white.cut(30, -4)
+# white.fixAberations()
+# white.subtract(w_fit)
+
+
+# grey.add(white)
+
+# grey.cut(110, None)
+# grey.cut(915, -35)
+
+# grey.displayColored(display_label=False, label1='gris', label2='blanc')
+# grey.pca()
+# grey.pcaScatterPlot(1, 2)
+# grey.pcaScatterPlot(1, 3)
+# grey.pcaScatterPlot(1, 4)
+# grey.pcaScatterPlot(2, 3)
+# grey.pcaScatterPlot(2, 4)
+# grey.pcaScatterPlot(3, 4)
+# grey.pcaScatterPlot(2, 5)
+# grey.pcaScatterPlot(3, 5)
+# grey.pcaScatterPlot(4, 5)
+
+# grey.pcaDisplay(1, 2, 3, WN=True)
+# grey.pcaDisplay(4, 5, 6, WN=True)
+# grey.pcaDisplay(7, 8, 9, WN=True)
+
+
+
+
+#shavasana ----------------------------------------
+# get data
+db = SpectraDB()
+DataSha_RGPI = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RGPI")
+DataSha_RGPI_x = np.array(DataSha_RGPI.index)
+DataSha_RGPI = DataSha_RGPI.to_numpy().T
+
+DataSha_RSTN = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RSTN")
+DataSha_RSTN_x = np.array(DataSha_RSTN.index)
+DataSha_RSTN = DataSha_RSTN.to_numpy().T
+
+DataSha_ROFF = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="ROFF")
+DataSha_ROFF_x = np.array(DataSha_ROFF.index)
+DataSha_ROFF = DataSha_ROFF.to_numpy().T
+
+#get labels
+DRS_RGPI_label =
+DRS_RSTN_label =
+DRS_ROFF_label =
+
+
+
+DRS_RGPI = spectrum.ArrayToSpectra(DataSha_RGPI_x, DataSha_RGPI, label='DRS_RGPI').asSpectra()
+DRS_RSTN = spectrum.ArrayToSpectra(DataSha_RSTN_x, DataSha_RSTN, label='DRS_RSTN').asSpectra()
+DRS_ROFF = spectrum.ArrayToSpectra(DataSha_ROFF_x, DataSha_ROFF, label='DRS_ROFF').asSpectra()
+
+DRS_RGPI.add(DRS_ROFF, DRS_RSTN)
+DRS_RGPI.cut(450, 587, WL=True)
+DRS_RGPI.display3Colored('DRS_RGPI', 'DRS_RSTN', 'DRS_ROFF', WN=False, display_label=False)
+DRS_RGPI.pca()
+DRS_RGPI.pcaScatterPlot(1, 2)
+DRS_RGPI.pcaScatterPlot(3, 4)
+DRS_RGPI.pcaScatterPlot(5, 6)
+DRS_RGPI.pcaScatterPlot(7, 8)
+DRS_RGPI.pcaScatterPlot(9, 10)
+DRS_RGPI.pcaDisplay(1, 2, 3)
+DRS_RGPI.pcaDisplay(4, 5, 6)
+DRS_RGPI.pcaDisplay(7, 8, 9)
