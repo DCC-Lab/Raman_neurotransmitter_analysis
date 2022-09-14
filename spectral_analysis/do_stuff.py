@@ -1,6 +1,7 @@
 import numpy as np
 from dcclab.database import *
 import spectrum
+import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
@@ -200,11 +201,11 @@ nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectr
 
 
 # data spectro shifted
-iso_new = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220627/').spectra()
+# iso_new = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220627/').spectra()
 # iso_new.display()
 # iso_new.normalizeIntegration()
 
-iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
+# iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
 #
 # x = iso_good.spectra[0].wavelenghts
 # label = []
@@ -223,7 +224,7 @@ iso_good = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_i
 # for i in range(16):
 #     constant.append(40)
 #
-iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectra()
+# iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').spectra()
 # iso_bad = iso_bad.spectra[300]
 # plt.plot(iso_bad.counts[190:205])
 # plt.plot(constant, '--k')
@@ -474,39 +475,280 @@ iso_bad = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220422/iso/').s
 
 #shavasana ----------------------------------------
 # get data
-db = SpectraDB()
-DataSha_RGPI = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RGPI")
-DataSha_RGPI_x = np.array(DataSha_RGPI.index)
-DataSha_RGPI = DataSha_RGPI.to_numpy().T
+# db = SpectraDB()
+# DataSha_RGPI = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RGPI")
+# DataSha_RGPI_x = np.array(DataSha_RGPI.index)
+# DataSha_RGPI = DataSha_RGPI.to_numpy().T
+#
+# DataSha_RSTN = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RSTN")
+# DataSha_RSTN_x = np.array(DataSha_RSTN.index)
+# DataSha_RSTN = DataSha_RSTN.to_numpy().T
+#
+# DataSha_ROFF = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="ROFF")
+# DataSha_ROFF_x = np.array(DataSha_ROFF.index)
+# DataSha_ROFF = DataSha_ROFF.to_numpy().T
+#
+# DataSha_LGPI = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="LGPI")
+# DataSha_LGPI_x = np.array(DataSha_LGPI.index)
+# DataSha_LGPI = DataSha_LGPI.to_numpy().T
+#
+# DataSha_LSTN = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="LSTN")
+# DataSha_LSTN_x = np.array(DataSha_LSTN.index)
+# DataSha_LSTN = DataSha_LSTN.to_numpy().T
+#
+# DataSha_LOFF = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="LOFF")
+# DataSha_LOFF_x = np.array(DataSha_LOFF.index)
+# DataSha_LOFF = DataSha_LOFF.to_numpy().T
+#
+# DataLab_DRS3 = db.getSpectralDataFrame(datasetId='DRS-003')
+# DRS3_label = list(DataLab_DRS3)
+# DataLab_DRS3_x = np.array(DataLab_DRS3.index)
+# DataLab_DRS3 = DataLab_DRS3.to_numpy().T
+#
+# DataLab_DRS4 = db.getSpectralDataFrame(datasetId='DRS-004')
+# DRS4_label = list(DataLab_DRS4)
+# DataLab_DRS4_x = np.array(DataLab_DRS4.index)
+# DataLab_DRS4 = DataLab_DRS4.to_numpy().T
+#
+#
+# #get labels
+# def BarCode(Section, lenght):
+#     TRUTH = pd.read_csv(Section)[:-3]['Gray_Value'].to_numpy()
+#     splits = np.array_split(TRUTH, lenght)
+#     GL_TRUTH = []
+#     for i in splits:
+#         GL_TRUTH.append(np.mean(i))
+#     GL_TRUTH = np.array(GL_TRUTH)
+#     GL_TRUTH[GL_TRUTH > 245] = 1
+#     GL_TRUTH[GL_TRUTH > 180] = 2
+#     GL_TRUTH[GL_TRUTH > 105] = 3
+#     GL_TRUTH = np.where(GL_TRUTH == 1, 'WHITE', GL_TRUTH)
+#     GL_TRUTH = np.where(GL_TRUTH == '2.0', 'MIXED', GL_TRUTH)
+#     GL_TRUTH = np.where(GL_TRUTH == '3.0', 'GREY', GL_TRUTH)
+#
+#     return GL_TRUTH
+#
+# DRS_RGPI_label = BarCode('/Users/antoinerousseau/Downloads/RGPi.csv', len(DataSha_RGPI))
+# DRS_RSTN_label = BarCode('/Users/antoinerousseau/Downloads/RSTN.csv', len(DataSha_RSTN))
+# DRS_ROFF_label = BarCode('/Users/antoinerousseau/Downloads/Roff.csv', len(DataSha_ROFF))
+# DRS_LGPI_label = BarCode('/Users/antoinerousseau/Downloads/LGPi.csv', len(DataSha_LGPI))
+# DRS_LSTN_label = BarCode('/Users/antoinerousseau/Downloads/LSTN.csv', len(DataSha_LSTN))
+# DRS_LOFF_label = BarCode('/Users/antoinerousseau/Downloads/Loff.csv', len(DataSha_LOFF))
+#
+#
+# #get rid of crap data in Right side
+# DataSha_RSTN = np.delete(DataSha_RSTN, np.s_[1::2], 0)
+# DRS_RSTN_label = np.delete(DRS_RSTN_label, np.s_[1::2], 0)
+# DataSha_RGPI = np.delete(DataSha_RGPI, np.s_[1::2], 0)
+# DRS_RGPI_label = np.delete(DRS_RGPI_label, np.s_[1::2], 0)
+# DataSha_ROFF = np.delete(DataSha_ROFF, np.s_[1::2], 0)
+# DRS_ROFF_label = np.delete(DRS_ROFF_label, np.s_[1::2], 0)
+#
+#
+# #get data as Spectrum objects
+# DRS_RGPI = spectrum.ArrayToSpectra(DataSha_RGPI_x, DataSha_RGPI, label=DRS_RGPI_label).asSpectra()
+# DRS_RGPI.addAnnotation('RGPI')
+# DRS_RSTN = spectrum.ArrayToSpectra(DataSha_RSTN_x, DataSha_RSTN, label=DRS_RSTN_label).asSpectra()
+# DRS_RSTN.addAnnotation('RSTN')
+# DRS_ROFF = spectrum.ArrayToSpectra(DataSha_ROFF_x, DataSha_ROFF, label=DRS_ROFF_label).asSpectra()
+# DRS_ROFF.addAnnotation('ROFF')
+# DRS_LGPI = spectrum.ArrayToSpectra(DataSha_LGPI_x, DataSha_LGPI, label=DRS_LGPI_label).asSpectra()
+# DRS_LGPI.addAnnotation('LGPI')
+# DRS_LSTN = spectrum.ArrayToSpectra(DataSha_LSTN_x, DataSha_LSTN, label=DRS_LSTN_label).asSpectra()
+# DRS_LSTN.addAnnotation('LSTN')
+# DRS_LOFF = spectrum.ArrayToSpectra(DataSha_LOFF_x, DataSha_LOFF, label=DRS_LOFF_label).asSpectra()
+# DRS_LOFF.addAnnotation('LOFF')
+#
+#
+#
+# DRS3 = spectrum.ArrayToSpectra(DataLab_DRS3_x, DataLab_DRS3, label=DRS3_label)
+# DRS3.cleanLabel([2])
+# DRS3 = DRS3.asSpectra()
+#
+# DRS4 = spectrum.ArrayToSpectra(DataLab_DRS4_x, DataLab_DRS4, label=DRS4_label)
+# DRS4.cleanLabel([2])
+# DRS4 = DRS4.asSpectra()
 
-DataSha_RSTN = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="RSTN")
-DataSha_RSTN_x = np.array(DataSha_RSTN.index)
-DataSha_RSTN = DataSha_RSTN.to_numpy().T
+#do shit
 
-DataSha_ROFF = db.getSpectralDataFrame(datasetId="SHAVASANA-001", id1="DRS", id2="ROFF")
-DataSha_ROFF_x = np.array(DataSha_ROFF.index)
-DataSha_ROFF = DataSha_ROFF.to_numpy().T
+#get alex's lab data
 
-#get labels
-DRS_RGPI_label =
-DRS_RSTN_label =
-DRS_ROFF_label =
+# GREY = []
+# WHITE = []
+# MIXED = []
+# for dir in os.listdir('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/Grey/'):
+#     if dir[0] == '.':
+#         continue
+#     GREY.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/Grey/' + dir + '/', fileType='USB2000').spectraSum())
+# for dir in os.listdir('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/White/'):
+#     if dir[0] == '.':
+#         continue
+#     WHITE.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/White/' + dir + '/', fileType='USB2000').spectraSum())
+# for dir in os.listdir('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/Mixed/'):
+#     if dir[0] == '.':
+#         continue
+#     MIXED.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/2022-08-30_DRS-005/Mixed/' + dir + '/', fileType='USB2000').spectraSum())
+#
+# GREY = spectrum.Spectra(GREY)
+# GREY.changeLabel('GREY')
+# GREY.addAnnotation('GREY')
+# WHITE = spectrum.Spectra(WHITE)
+# WHITE.changeLabel('WHITE')
+# WHITE.addAnnotation('WHITE')
+# MIXED = spectrum.Spectra(MIXED)
+# MIXED.changeLabel('MIXED')
+# MIXED.addAnnotation('MIXED')
+
+# data = GREY
+# data.add(WHITE, MIXED)
+
+# get alex and me's DRS data
+
+GREY = []
+WHITE = []
+blood = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/blood/', fileType='USB2000').spectra()
+blood_ref = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/ref/', fileType='USB2000').spectraSum()
+for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/grey/'):
+    if dir[0] == '.':
+        continue
+    GREY.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/grey/' + dir + '/', fileType='USB2000').spectra())
+for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/white/'):
+    if dir[0] == '.':
+        continue
+    WHITE.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/white/' + dir + '/', fileType='USB2000').spectra())
+
+GREY = spectrum.Spectra(GREY)
+GREY.changeLabel('GREY')
+GREY.addAnnotation('GREY')
+WHITE = spectrum.Spectra(WHITE)
+WHITE.changeLabel('WHITE')
+WHITE.addAnnotation('WHITE')
+
+# data = GREY
+# data.add(WHITE)
 
 
 
-DRS_RGPI = spectrum.ArrayToSpectra(DataSha_RGPI_x, DataSha_RGPI, label='DRS_RGPI').asSpectra()
-DRS_RSTN = spectrum.ArrayToSpectra(DataSha_RSTN_x, DataSha_RSTN, label='DRS_RSTN').asSpectra()
-DRS_ROFF = spectrum.ArrayToSpectra(DataSha_ROFF_x, DataSha_ROFF, label='DRS_ROFF').asSpectra()
 
-DRS_RGPI.add(DRS_ROFF, DRS_RSTN)
-DRS_RGPI.cut(450, 587, WL=True)
-DRS_RGPI.display3Colored('DRS_RGPI', 'DRS_RSTN', 'DRS_ROFF', WN=False, display_label=False)
-DRS_RGPI.pca()
-DRS_RGPI.pcaScatterPlot(1, 2)
-DRS_RGPI.pcaScatterPlot(3, 4)
-DRS_RGPI.pcaScatterPlot(5, 6)
-DRS_RGPI.pcaScatterPlot(7, 8)
-DRS_RGPI.pcaScatterPlot(9, 10)
-DRS_RGPI.pcaDisplay(1, 2, 3)
-DRS_RGPI.pcaDisplay(4, 5, 6)
-DRS_RGPI.pcaDisplay(7, 8, 9)
+
+# data._standardizeData(replace=True)
+# data.display3Colored(label1='GREY', label2='WHITE', label3='MIXED', WN=False)
+
+# old = DRS3.spectra[1]
+# old.normalizeIntegration()
+# DRS3.spectra[1].changeXAxisValues(DRS_RGPI.spectra[0], print_info=True)
+# DRS4.display()
+# viande = DRS3.spectra[1].addSpectra(DRS_LOFF.spectra[0])
+# viande.add(old)
+# viande.normalizeIntegration()
+# viande.display()
+# w_sum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectraSum()
+# YDK_data = spectrum.Acquisition('/Users/antoinerousseau/Downloads/2022-08-25-AddDataToShavasana/', fileType='USB2000').spectra()
+# YDK_data.normalizeIntegration()
+# YDK_data.add(DRS_LOFF)
+# YDK_data.normalizeIntegration()
+# YDK_data.display2Colored(label1='2022-08-25-AddDataToShavasana', label2='MIXED', WN=False, display_label=False)
+
+# DRS_LOFF.normalizeIntegration()
+#
+# plt.plot(old.wavelenghts, old.counts, label='Our spectro')
+# plt.plot(DRS_LOFF.spectra[0].wavelenghts, DRS_LOFF.spectra[0].counts, label='shavasana')
+# plt.plot(YDK_data.spectra[0].wavelenghts, YDK_data.spectra[0].counts, label='YDK spectro')
+# plt.legend()
+# plt.show()
+
+
+# data = DRS_RGPI
+# data.add(DRS_ROFF, DRS_RSTN, DRS_LGPI, DRS_LSTN, DRS_LOFF)
+# data = DRS_LGPI
+# data.add(DRS_LSTN, DRS_LOFF)
+# data.smooth()
+# data.cut(450, 650, WL=True)
+
+# data.removeLabel('MIXED')
+# data.cut(450, 587, WL=True)
+# data.remove(513, 528, WL=True)
+# data.cut(528, 587, WL=True)
+# data.cut(450, 513, WL=True)
+# data.cut(490, 750, WL=True)
+# data.polyfit(4, replace=True)
+# data.kpca(nbOfComp=1)
+# data.kpca(nbOfComp=2)
+# data.kpca(nbOfComp=3)
+# data.kpca(nbOfComp=4)
+# data.kpca(nbOfComp=4)
+# data.kpca(nbOfComp=4)
+# data.kpca(nbOfComp=4)
+# data.kpca(nbOfComp=4)
+# data.kpca(nbOfComp=5)
+# data.kpca(nbOfComp=7)
+# data.kpca(nbOfComp=10)
+
+# data.normalizeIntegration()
+# data.removeLabel('MIXED')
+# data.cut(400, 850, WL=True)
+# data.fixAberations(threshold=0.01, display=True)
+# data.polyfit(4, replace=True)
+# data.tsne()
+# data.umap()
+
+# data.display2Colored('WHITE', 'GREY', WN=False, display_label=True)
+# data.pca()
+# data.removeLabel('MIXED')
+# data.ldaOnPCsScatteredPlot(1, 2)
+# data.pcaScatterPlot(1, 2)
+# data.pcaScatterPlot(3, 4)
+# data.pcaScatterPlot(5, 6)
+# data.pcaScatterPlot(7, 8)
+# data.pcaScatterPlot(9, 10)
+# data.pcaDisplay(1, 2)
+# data.pcaDisplay(4, 5, 6)
+# data.pcaDisplay(7, 8, 9)
+# data.umap()
+
+# blood.cut(50, None)
+# blood_ref.cut(50, None)
+# blood.display(WN=False)
+# blood_abs = blood.getAbsorbance(blood_ref)
+# blood_abs.display(WN=False)
+# blooderini = blood_abs.sumSpec()
+# blooderini.display(WN=False)
+
+def RamanBrainGrayWhite():
+    grey = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/gris/').spectra()
+    white = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectra()
+    data = grey
+    data.add(white)
+    data.removeThermalNoise(nbg)
+    data.cut(30, 1040)
+    data.fixAberations()
+    data.display2ColoredMeanSTD(label1='gris', label2='blanc')
+    data.cut(400, 1600, WN=True)
+    data.polyfit(4, replace=True)
+    data.normalizeIntegration()
+    data.display2ColoredMeanSTD(label1='gris', label2='blanc')
+    data.pca()
+    data.pcaScatterPlot(1, 2)
+    data.pcaScatterPlot(3, 4)
+    data.pcaScatterPlot(5, 6)
+    data.pcaDisplay(1, 2, 3)
+    data.pcaDisplay(4, 5, 6)
+    data.umap()
+
+
+def NaClDataDisplayAndPCA():
+    water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/water/').spectra()
+    NaCl_max = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/NaCl_max/').spectra()
+    NaCl_few = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/NaCl_few/').spectra()
+
+    data = water
+    data.add(NaCl_max, NaCl_few)
+    data.removeThermalNoise(nbg)
+    data.cut(500, None, WN=True)
+    data.normalizeIntegration()
+    data.display3ColoredMeanSTD(label1='water', label2='NaCl_max', label3='NaCl_few', WN=True)
+    data.pca()
+    data.pcaScatterPlot(1, 2)
+    data.pcaScatterPlot(3, 4)
+    data.pcaDisplay(1, 2)
+    data.pcaDisplay(3, 4)
