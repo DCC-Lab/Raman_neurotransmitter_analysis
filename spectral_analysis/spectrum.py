@@ -1692,4 +1692,37 @@ class Spectra:
         self._loadData()
 
 
+    def plotPCOnBarCode(self, PC, BarCode, shift=0):
+        self._loadData()
+        self._getPCAdf()
+        assert len(BarCode) == len(self.pca_df), 'You should have elements in the PCs dataframe then in the BarCode provided. Right nopw, you have {0} elements in the PCs dataframe and {1} elements in the BarCode'.format(len(self.pca_df), len(BarCode))
+        digital_BarCode = []
+        for i in range(len(BarCode)):
+            if BarCode[i] == 'WHITE':
+                digital_BarCode.append(1)
+            if BarCode[i] == 'MIXED':
+                digital_BarCode.append(0.5)
+            if BarCode[i] == 'GREY':
+                digital_BarCode.append(0)
+        PCdata = self.pca_df['PC{0}'.format(PC)].to_numpy()
+        PCdata_max = np.amax(PCdata)
+        PCdata_min = np.amin(PCdata)
+        expansion = abs(PCdata_max) + abs(PCdata_min)
+        PCdata = PCdata / expansion
+        new_min = np.amin(PCdata)
+        PCdata = PCdata - new_min
+        assert len(digital_BarCode) == len(PCdata), 'Some labels in the BarCode are probably wrong! Make sure that all elements in the BarCod are either "WHITE", "GREY" or "MIXED"'
+        x = np.array(range(len(PCdata)))
+        x = x / 10 # now in mm
+        x_shift = x + shift
 
+        plt.plot(x, PCdata, 'r', label='PC{0}'.format(PC))
+        plt.plot(x_shift, digital_BarCode, 'ko', label='BarCode')
+        plt.xlabel('Distance [mm]')
+        plt.legend()
+        plt.show()
+
+
+    def shiftSpectra(self, shift): #shift in nb of data (each, point is 100um)
+        # shift positiv will shift the bar
+        print('hello')
