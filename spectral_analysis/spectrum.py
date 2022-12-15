@@ -18,8 +18,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from umap import UMAP
 from sklearn.manifold import TSNE
-
-
+from scipy.signal import savgol_filter
+from sklearn.cluster import KMeans
+import random
 
 
 class QEproSpectralFile:
@@ -43,9 +44,7 @@ class QEproSpectralFile:
         self.isValid()
         self._loadAcquisitionDetails()
 
-
-
-    def isValid(self, pixelNb = 1044):
+    def isValid(self, pixelNb=1044):
         # Is it a .txt file
         fileType = self.filepath.split('/')[-1][-4:]
         assert fileType == '.txt', 'file type should be .txt'
@@ -62,21 +61,29 @@ class QEproSpectralFile:
         pixel_nb = fich_list[12]
         fich.close()
 
-        assert date.split(': ')[0] == 'Date', "Was expecting the .txt file\'s 3rd lane to be the date of the acquisition"
-        assert trig_mode.split(': ')[0] == 'Trigger mode', "Was expecting the .txt file\'s 6th lane to be the trigger mode used for the acquisition"
-        assert integration_time.split(': ')[0] == 'Integration Time (sec)', "Was expecting the .txt file\'s 7th lane to be the integration time used (in sec) for the acquisition"
-        assert dark_corr.split(': ')[0] == 'Electric dark correction enabled', "Was expecting the .txt file\'s 9th lane to be the electric dark correction state for the acquisition"
-        assert nonlin_corr.split(': ')[0] == 'Nonlinearity correction enabled', "Was expecting the .txt file\'s 10th lane to be the nonlinearity correction state for the acquisition"
-        assert x_axis_unit.split(': ')[0] == 'XAxis mode', "Was expecting the .txt file\'s 12th lane to be the x axis units for the acquisition"
-        assert pixel_nb.split(': ')[0] == 'Number of Pixels in Spectrum', "Was expecting the .txt file\'s 13th lane to be the number of pixels used for the acquisition"
+        assert date.split(': ')[
+                   0] == 'Date', "Was expecting the .txt file\'s 3rd lane to be the date of the acquisition"
+        assert trig_mode.split(': ')[
+                   0] == 'Trigger mode', "Was expecting the .txt file\'s 6th lane to be the trigger mode used for the acquisition"
+        assert integration_time.split(': ')[
+                   0] == 'Integration Time (sec)', "Was expecting the .txt file\'s 7th lane to be the integration time used (in sec) for the acquisition"
+        assert dark_corr.split(': ')[
+                   0] == 'Electric dark correction enabled', "Was expecting the .txt file\'s 9th lane to be the electric dark correction state for the acquisition"
+        assert nonlin_corr.split(': ')[
+                   0] == 'Nonlinearity correction enabled', "Was expecting the .txt file\'s 10th lane to be the nonlinearity correction state for the acquisition"
+        assert x_axis_unit.split(': ')[
+                   0] == 'XAxis mode', "Was expecting the .txt file\'s 12th lane to be the x axis units for the acquisition"
+        assert pixel_nb.split(': ')[
+                   0] == 'Number of Pixels in Spectrum', "Was expecting the .txt file\'s 13th lane to be the number of pixels used for the acquisition"
 
         # Does it have the right len(x), len(y)
-        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb), str(len(self.x)))
-        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb), str(len(self.y)))
+        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.x)))
+        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.y)))
         assert len(self.x) == len(self.y), "x and y values for a spectrum should have the same amount of elements"
 
         # print('File is valid')
-
 
     def _loadSpectrumValues(self):
         fich = open(self.filepath, "r")
@@ -92,7 +99,6 @@ class QEproSpectralFile:
             self.y.append(float(elem[1]))
             spectral_data.append([float(elem[0]), float(elem[1])])
         self.spectrum = np.transpose(spectral_data)
-
 
     def _loadAcquisitionDetails(self):
         fich = open(self.filepath, "r")
@@ -182,9 +188,7 @@ class USB2000SpectralFile:
         self.isValid()
         self._loadAcquisitionDetails()
 
-
-
-    def isValid(self, pixelNb = 2048):
+    def isValid(self, pixelNb=2048):
         # Is it a .txt file
         fileType = self.filepath.split('/')[-1][-4:]
         assert fileType == '.txt', 'file type should be .txt'
@@ -200,20 +204,27 @@ class USB2000SpectralFile:
         pixel_nb = fich_list[11]
         fich.close()
 
-        assert date.split(': ')[0] == 'Date', "Was expecting the .txt file\'s 3rd lane to be the date of the acquisition"
-        assert trig_mode.split(': ')[0] == 'Trigger mode', "Was expecting the .txt file\'s 6th lane to be the trigger mode used for the acquisition"
-        assert integration_time.split(': ')[0] == 'Integration Time (sec)', "Was expecting the .txt file\'s 7th lane to be the integration time used (in sec) for the acquisition"
-        assert dark_corr.split(': ')[0] == 'Electric dark correction enabled', "Was expecting the .txt file\'s 9th lane to be the electric dark correction state for the acquisition"
-        assert x_axis_unit.split(': ')[0] == 'XAxis mode', "Was expecting the .txt file\'s 12th lane to be the x axis units for the acquisition"
-        assert pixel_nb.split(': ')[0] == 'Number of Pixels in Spectrum', "Was expecting the .txt file\'s 13th lane to be the number of pixels used for the acquisition"
+        assert date.split(': ')[
+                   0] == 'Date', "Was expecting the .txt file\'s 3rd lane to be the date of the acquisition"
+        assert trig_mode.split(': ')[
+                   0] == 'Trigger mode', "Was expecting the .txt file\'s 6th lane to be the trigger mode used for the acquisition"
+        assert integration_time.split(': ')[
+                   0] == 'Integration Time (sec)', "Was expecting the .txt file\'s 7th lane to be the integration time used (in sec) for the acquisition"
+        assert dark_corr.split(': ')[
+                   0] == 'Electric dark correction enabled', "Was expecting the .txt file\'s 9th lane to be the electric dark correction state for the acquisition"
+        assert x_axis_unit.split(': ')[
+                   0] == 'XAxis mode', "Was expecting the .txt file\'s 12th lane to be the x axis units for the acquisition"
+        assert pixel_nb.split(': ')[
+                   0] == 'Number of Pixels in Spectrum', "Was expecting the .txt file\'s 13th lane to be the number of pixels used for the acquisition"
 
         # Does it have the right len(x), len(y)
-        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb), str(len(self.x)))
-        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb), str(len(self.y)))
+        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.x)))
+        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.y)))
         assert len(self.x) == len(self.y), "x and y values for a spectrum should have the same amount of elements"
 
         # print('File is valid')
-
 
     def _loadSpectrumValues(self):
         fich = open(self.filepath, "r")
@@ -229,7 +240,6 @@ class USB2000SpectralFile:
             self.y.append(float(elem[1]))
             spectral_data.append([float(elem[0]), float(elem[1])])
         self.spectrum = np.transpose(spectral_data)
-
 
     def _loadAcquisitionDetails(self):
         fich = open(self.filepath, "r")
@@ -282,7 +292,6 @@ class USB2000SpectralFile:
             dark_corr = True
         if dark_corr == 'false':
             dark_corr = False
-
 
         self.date = year + month + day
         self.trig_mode = int(trig_mode.split(' ')[-1])
@@ -348,18 +357,19 @@ class DeapoliLiveMonkeySpectralFile:
         self._loadSpectrumValues()
         self.isValid()
 
-    def isValid(self, pixelNb = 2048):
+    def isValid(self, pixelNb=2048):
         # Is it a .txt file
         fileType = self.filepath.split('/')[-1][-4:]
         assert fileType == '.txt', 'file type should be .txt'
 
         # Does it have the right len(x), len(y)
-        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb), str(len(self.x)))
-        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb), str(len(self.y)))
+        assert len(self.x) == pixelNb, "Was expecting {0} x values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.x)))
+        assert len(self.y) == pixelNb, "Was expecting {0} y values, {1} were given".format(str(pixelNb),
+                                                                                           str(len(self.y)))
         assert len(self.x) == len(self.y), "x and y values for a spectrum should have the same amount of elements"
 
         # print('File is valid')
-
 
     def _loadSpectrumValues(self):
         fich = open(self.filepath, "r")
@@ -384,7 +394,6 @@ class DeapoliLiveMonkeySpectralFile:
             new_y = float(val) * 10 ** float(exp)
             self.y.append(new_y)
         self.spectrum = [self.x, self.y]
-
 
 
 class Acquisition:
@@ -413,14 +422,13 @@ class Acquisition:
                 spectralFile = DeapoliLiveMonkeySpectralFile(directory + filepath)
                 self.spectralFiles.append(spectralFile)
 
-
     def _listNameOfFiles(self) -> list:
         foundFiles = []
         for file in os.listdir(self.directory):
             if file[0] == '.':
                 continue
             if file == 'README.txt':
-                #should do stuff like reading it and taking info from it
+                # should do stuff like reading it and taking info from it
                 RM = open(self.directory + file, "r")
                 self.README = list(RM)
                 continue
@@ -431,7 +439,6 @@ class Acquisition:
         foundFiles = sorted(foundFiles, key=len)
         return foundFiles
 
-
     def spectra(self):
         spectra = []
         for file in self.spectralFiles:
@@ -439,7 +446,6 @@ class Acquisition:
             spectra.append(spectrum)
 
         return Spectra(spectra)
-
 
     def spectraSum(self):
         count_sum = np.zeros(len(self.spectralFiles[0].x))
@@ -454,7 +460,6 @@ class Acquisition:
         convert = lambda text: int(text) if text.isdigit() else text.lower()
         alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
         return sorted(data, key=alphanum_key)
-
 
 
 class ArrayToSpectra:
@@ -475,17 +480,16 @@ class ArrayToSpectra:
             for i in range(len(array)):
                 self.labelList.append(label)
 
-
         if self.integrationTimeList == None:
             self.integrationTimeList = []
             for i in range(len(array)):
                 self.integrationTimeList.append(1)
 
-        assert len(array) == len(self.labelList) == len(self.integrationTimeList), 'Arguments given must all be the same length'
+        assert len(array) == len(self.labelList) == len(
+            self.integrationTimeList), 'Arguments given must all be the same length'
         assert len(x) == len(array[0]), 'x must be an array containing as many element as each array element'
 
         self._prepareSpectraList()
-
 
     def _prepareSpectraList(self):
         self.spectra = []
@@ -493,14 +497,12 @@ class ArrayToSpectra:
             spectrum = Spectrum(self.x, self.data[i], self.integrationTimeList[i], self.labelList[i])
             self.spectra.append(spectrum)
 
-
     def asSpectra(self):
         self._prepareSpectraList()
         spectra = []
         for spectrum in self.spectra:
             spectra.append(spectrum)
         return Spectra(spectra)
-
 
     def cleanLabel(self, keyPos):
         # keyPos is the position of the element of interest in original label
@@ -511,7 +513,6 @@ class ArrayToSpectra:
                 key += label.split('-')[i]
             newLabels.append(key)
         self.labelList = newLabels
-
 
 
 class Spectrum:
@@ -529,7 +530,6 @@ class Spectrum:
         if exist == True:
             self.wavenumbers = None
 
-
     def getSNR(self, bgStart=550, bgEnd=800):
         if len(self.counts) <= bgStart:
             return None, None, None
@@ -537,15 +537,19 @@ class Spectrum:
             bg_AVG = 0
             for i in range(bgStart, bgEnd):
                 bg_AVG += self.counts[i] / (bgEnd - bgStart)
-            return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (np.amax(self.counts) - bg_AVG)
+            return (np.amax(self.counts) - bg_AVG) / np.sqrt(bg_AVG), np.amax(self.counts), (
+                        np.amax(self.counts) - bg_AVG)
 
+    def removeMean(self):
+        mean = np.mean(self.counts)
+        self.counts = self.counts - mean
 
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
         # snrString = ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime)
         snrString = "todo"
         if WN == True and NoX == False:
             xlabel = 'Wavenumber [cm-1]'
-            plt.plot(self.wavenumbers, self.counts,  label=self.label + snrString)
+            plt.plot(self.wavenumbers, self.counts, label=self.label + snrString)
         if WN == False and NoX == False:
             plt.plot(self.wavelenghts, self.counts, label=self.label + snrString)
         if NoX == True:
@@ -555,8 +559,7 @@ class Spectrum:
         plt.legend()
         plt.show()
 
-
-    def subtract(self, specToSub, specToSub_AcqTime=1): # kwargs expected: time and factor
+    def subtract(self, specToSub, specToSub_AcqTime=1):  # kwargs expected: time and factor
         # le specToSubAcqTime est à changer pour mettre le bon temps d'acquisition du spectre à soustraire si le spectre a soustraire n'est as de type Spectrum
         acqTime = self.integrationTime
 
@@ -564,8 +567,8 @@ class Spectrum:
             self.counts = list(np.array(self.counts) - (acqTime * np.array(specToSub) / specToSub_AcqTime))
 
         if type(specToSub) == Spectrum:
-            self.counts = list(np.array(self.counts) - (acqTime * np.array(specToSub.counts)) / specToSub.integrationTime)
-
+            self.counts = list(
+                np.array(self.counts) - (acqTime * np.array(specToSub.counts)) / specToSub.integrationTime)
 
     def removeThermalNoise(self, TNToRemove):
         assert type(TNToRemove) == Spectrum, 'Passed argument should be of type Spectrum'
@@ -574,10 +577,8 @@ class Spectrum:
 
         self.counts = list(np.array(self.counts) - (acqTime * np.array(TNToRemove.counts) / specToSub_AcqTime))
 
-
     def factor(self, factor):
         self.counts = list(np.array(self.counts) * factor)
-
 
     def normalizeIntegration(self):
         integration = 0
@@ -586,14 +587,11 @@ class Spectrum:
 
         self.counts = list(np.array(self.counts) / integration)
 
-
     def normalizeCounts(self):
         self.counts = list(np.array(self.counts) / np.amax(self.counts))
 
-
     def normalizeTime(self):
         self.counts = list(np.array(self.counts) / self.integrationTime)
-
 
     def addSpectra(self, spectraToAdd):
         # Returns a spectra object containing this spectrum + the spectra or spectrum given as argument
@@ -607,8 +605,10 @@ class Spectrum:
         if type(spectraToAdd) == Spectrum:
             newSpectra.spectra.append(spectraToAdd)
 
-        return newSpectra
+        else:
+            raise ValueError('The given value is neither a Spectra or a Spectrum object')
 
+        return newSpectra
 
     @staticmethod
     def polyFunc(x, fit_coefs):
@@ -633,7 +633,6 @@ class Spectrum:
 
         return y
 
-
     def polyfit(self, poly_order, show=False, replace=False, return_fit=False):
         # should return a spectum object ? i think so....
         # should i raise expection for it to work without any integration time?
@@ -643,7 +642,7 @@ class Spectrum:
         if show == True:
             plt.plot(self.wavelenghts, self.counts, 'k-', label='Data curve')
             plt.plot(self.wavelenghts, y_fit, 'r--', label='{0}th order polynomial fit'.format(poly_order))
-            plt.plot(self.wavelenghts, (np.array(self.counts)-np.array(y_fit)), 'r', label='subtraction')
+            plt.plot(self.wavelenghts, (np.array(self.counts) - np.array(y_fit)), 'r', label='subtraction')
             plt.legend()
             plt.show()
 
@@ -651,9 +650,8 @@ class Spectrum:
             self.counts = (np.array(self.counts) - np.array(y_fit))
 
         label = self.label + '_fit'
-        if return_fit ==True:
+        if return_fit == True:
             return Spectrum(self.wavelenghts, y_fit, self.integrationTime, label)
-
 
     def fft(self, show=False, replace=False, return_fit=False, fc=0.001, b=0.04, shift=54):
 
@@ -709,14 +707,13 @@ class Spectrum:
             self.counts = self.fftFilteredCounts
 
         if return_fit == True:
-            return Spectrum(self.wavelenghts[:len(self.counts)], self.fft_fit[:len(self.counts)], self.integrationTime, 'fft_fit')
-
+            return Spectrum(self.wavelenghts[:len(self.counts)], self.fft_fit[:len(self.counts)], self.integrationTime,
+                            'fft_fit')
 
     def setZero(self, val):
         self.counts[0:val] = 0
 
-
-    #works for data acquired on 20220802 for 10 sec integration in monkey brain samples in PBS
+    # works for data acquired on 20220802 for 10 sec integration in monkey brain samples in PBS
     def fixAberations(self, threshold=3.5, display=False):
         count = 0
         for i in range(2, len(self.counts) - 2):
@@ -725,18 +722,17 @@ class Spectrum:
             aft = self.counts[i + 1]
             edge_avg = (bef + aft) / 2
 
-            if (at - edge_avg) > (threshold * np.sqrt(edge_avg)) and at > (bef and aft) and abs(at - bef) > abs(bef - self.counts[i - 2]):
+            if (at - edge_avg) > (threshold * np.sqrt(edge_avg)) and at > (bef and aft) and abs(at - bef) > abs(
+                    bef - self.counts[i - 2]):
                 count += 1
                 self.counts[i] = edge_avg
         if display == True:
             print('{0} pixel values have been changed'.format(count))
 
-
     def smooth(self):
         for i in range(1, len(self.counts) - 1):
             val = (self.counts[i - 1] + self.counts[i] + self.counts[i + 1]) / 3
             self.counts[i] = val
-
 
     def cut(self, start, end, WN=False, WL=False):
         if WN == False and WL == False:
@@ -787,7 +783,6 @@ class Spectrum:
             self.wavelenghts = self.wavelenghts[WL_start: WL_end]
             self.counts = self.counts[WL_start: WL_end]
 
-
     def remove(self, start, end, WN=False, WL=False):
         if WN == False and WL == False:
             self.wavenumbers = np.delete(self.wavenumbers, np.s_[start: end])
@@ -816,8 +811,8 @@ class Spectrum:
         if WN == False and WL == True:
             WL = list(self.wavelenghts)
 
-            ADF_s = lambda list_value : abs(list_value - start)
-            ADF_e = lambda list_value : abs(list_value - end)
+            ADF_s = lambda list_value: abs(list_value - start)
+            ADF_e = lambda list_value: abs(list_value - end)
 
             CV_s = min(WL, key=ADF_s)
             CV_e = min(WL, key=ADF_e)
@@ -828,7 +823,6 @@ class Spectrum:
             self.wavenumbers = np.delete(self.wavenumbers, range(WL_start, WL_end), 0)
             self.wavelenghts = np.delete(self.wavelenghts, range(WL_start, WL_end), 0)
             self.counts = np.delete(self.counts, range(WL_start, WL_end), 0)
-
 
     def changeXAxisValues(self, ref, print_info=False):
         if type(ref) == list:
@@ -880,16 +874,16 @@ class Spectrum:
         self.wavenumbers = np.delete(self.wavenumbers, range(init_to_remove))
         self.wavenumbers = self.wavenumbers[0: new_x.size - end_to_remove]
 
-
-    def getAbsorbance(self, ref): #ref needs to be a Spectrum object
-        relative_spec = (np.array(self.counts) /  self.integrationTime) / (np.array(ref.counts) / ref.integrationTime)
+    def getAbsorbance(self, ref):  # ref needs to be a Spectrum object
+        relative_spec = (np.array(self.counts) / self.integrationTime) / (np.array(ref.counts) / ref.integrationTime)
         for i, value in enumerate(relative_spec):
             if value <= 0:
                 relative_spec[i] = 0.001
-
         A = -1 / (np.log10(1 / relative_spec))
-        return Spectrum(self.wavelenghts, A, 1, 'Absorbance')
+        return Spectrum(self.wavelenghts, A, 1, self.label)
 
+    def savgolFilter(self, window_length=40, order=2):
+        self.counts = savgol_filter(self.counts, window_length, order, mode="nearest")
 
 
 class Spectra:
@@ -908,7 +902,6 @@ class Spectra:
 
         self._loadData()
 
-
     def _loadData(self):
         self.data = []
         self.labelList = []
@@ -918,7 +911,6 @@ class Spectra:
             spectrum_label = spectrum.label
             self.data.append(spectrum_features)
             self.labelList.append(spectrum_label)
-
 
     def removeLabel(self, label):
         label_index_list = []
@@ -933,7 +925,6 @@ class Spectra:
         if self.annotations != None:
             self.annotations = np.delete(self.annotations, label_index_list, 0)
 
-
     def changeLabel(self, new_label):
         if type(new_label) == str:
             for spectrum in self.spectra:
@@ -942,16 +933,22 @@ class Spectra:
             for i in range(len(self.spectra)):
                 self.spectra[i].label = new_label[i]
         else:
-            print('Could not change the labels with an argument of type {0}. It needs to be a string, a list, or a np.array'.format(type(new_label)))
+            print(
+                'Could not change the labels with an argument of type {0}. It needs to be a string, a list, or a np.array'.format(
+                    type(new_label)))
         self._loadData()
 
-
+    def getLabelSpectra(self, label):
+        spectra = []
+        for spectrum in self.spectra:
+            if spectrum.label == label:
+                spectra.append(spectrum)
+        return Spectra(spectra)
 
     def addAnnotation(self, annotation):
         self.annotations = []
         for i in range(len(self.spectra)):
             self.annotations.append(annotation)
-
 
     def sumSpec(self):
         new_counts = np.zeros(np.shape(self.spectra[0].counts))
@@ -964,45 +961,45 @@ class Spectra:
 
         return Spectrum(self.spectra[0].wavelenghts, new_counts, integration_time, label)
 
-
     def display(self, WN=True, label=True):
         if WN == False:
             for spectrum in self.spectra:
-                plt.plot(spectrum.wavelenghts, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                plt.plot(spectrum.wavelenghts, spectrum.counts,
+                         label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                 plt.xlabel('Wavelenghts [nm]')
 
         if WN == True:
             for spectrum in self.spectra:
-                plt.plot(spectrum.wavenumbers, spectrum.counts, label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                plt.plot(spectrum.wavenumbers, spectrum.counts,
+                         label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                 plt.xlabel('Wavenumbers [cm-1]')
 
         plt.ylabel('Counts [-]')
-        if label==True:
+        if label == True:
             plt.legend()
         plt.show()
-
 
     def display2Colored(self, label1, label2, WN=True, display_label=True):
         if WN == False:
             for spectrum in self.spectra:
                 if spectrum.label == label1:
                     plt.plot(spectrum.wavelenghts, spectrum.counts, 'k')
-                            # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavelenghts [nm]')
                 if spectrum.label == label2:
                     plt.plot(spectrum.wavelenghts, spectrum.counts, 'r')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavelenghts [nm]')
 
         if WN == True:
             for spectrum in self.spectra:
                 if spectrum.label == label1:
                     plt.plot(spectrum.wavenumbers, spectrum.counts, 'k')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavenumbers [cm-1]')
                 if spectrum.label == label2:
                     plt.plot(spectrum.wavenumbers, spectrum.counts, 'r')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavenumbers [cm-1]')
 
         plt.ylabel('Counts [-]')
@@ -1014,36 +1011,35 @@ class Spectra:
 
         plt.show()
 
-
     def display3Colored(self, label1, label2, label3, WN=True, display_label=True):
         if WN == False:
             for spectrum in self.spectra:
                 if spectrum.label == label1:
                     plt.plot(spectrum.wavelenghts, spectrum.counts, 'k')
-                            # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavelenghts [nm]')
                 if spectrum.label == label2:
                     plt.plot(spectrum.wavelenghts, spectrum.counts, 'r')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavelenghts [nm]')
                 if spectrum.label == label3:
                     plt.plot(spectrum.wavelenghts, spectrum.counts, 'b')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavelenghts [nm]')
 
         if WN == True:
             for spectrum in self.spectra:
                 if spectrum.label == label1:
                     plt.plot(spectrum.wavenumbers, spectrum.counts, 'k')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavenumbers [cm-1]')
                 if spectrum.label == label2:
                     plt.plot(spectrum.wavenumbers, spectrum.counts, 'r')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavenumbers [cm-1]')
                 if spectrum.label == label3:
                     plt.plot(spectrum.wavenumbers, spectrum.counts, 'b')
-                             # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
+                    # label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
                     plt.xlabel('Wavenumbers [cm-1]')
 
         plt.ylabel('Counts [-]')
@@ -1053,7 +1049,6 @@ class Spectra:
             plt.plot([], [], 'b', label=label3)
             plt.legend()
         plt.show()
-
 
     def display2ColoredMeanSTD(self, label1, label2, WN=False, display_label=True):
         label1List = []
@@ -1070,9 +1065,9 @@ class Spectra:
 
         if WN == False:
             plt.plot(self.spectra[0].wavelenghts, mean1, 'k')
-            plt.fill_between(self.spectra[0].wavelenghts, mean1-std1, mean1+std1, facecolor='k', alpha=0.5)
+            plt.fill_between(self.spectra[0].wavelenghts, mean1 - std1, mean1 + std1, facecolor='k', alpha=0.5)
             plt.plot(self.spectra[0].wavelenghts, mean2, 'r')
-            plt.fill_between(self.spectra[0].wavelenghts, mean2-std2, mean2+std2, facecolor='r', alpha=0.5)
+            plt.fill_between(self.spectra[0].wavelenghts, mean2 - std2, mean2 + std2, facecolor='r', alpha=0.5)
 
         if WN == True:
             plt.plot(self.spectra[0].wavenumbers, mean1, 'k')
@@ -1088,7 +1083,6 @@ class Spectra:
             plt.legend()
 
         plt.show()
-
 
     def display3ColoredMeanSTD(self, label1, label2, label3, WN=False, display_label=True):
         label1List = []
@@ -1110,11 +1104,11 @@ class Spectra:
 
         if WN == False:
             plt.plot(self.spectra[0].wavelenghts, mean1, 'k')
-            plt.fill_between(self.spectra[0].wavelenghts, mean1-std1, mean1+std1, facecolor='k', alpha=0.5)
+            plt.fill_between(self.spectra[0].wavelenghts, mean1 - std1, mean1 + std1, facecolor='k', alpha=0.5)
             plt.plot(self.spectra[0].wavelenghts, mean2, 'r')
-            plt.fill_between(self.spectra[0].wavelenghts, mean2-std2, mean2+std2, facecolor='r', alpha=0.5)
+            plt.fill_between(self.spectra[0].wavelenghts, mean2 - std2, mean2 + std2, facecolor='r', alpha=0.5)
             plt.plot(self.spectra[0].wavelenghts, mean3, 'b')
-            plt.fill_between(self.spectra[0].wavelenghts, mean3-std3, mean3+std3, facecolor='b', alpha=0.5)
+            plt.fill_between(self.spectra[0].wavelenghts, mean3 - std3, mean3 + std3, facecolor='b', alpha=0.5)
 
         if WN == True:
             plt.plot(self.spectra[0].wavenumbers, mean1, 'k')
@@ -1133,47 +1127,94 @@ class Spectra:
 
         plt.show()
 
+    @staticmethod
+    def _Unique(liste):
+        unique_list = []
+        for elem in liste:
+            if elem not in unique_list:
+                unique_list.append(elem)
+        return unique_list
+
+    def displayMeanSTD(self, WN=False, display_label=True):
+        labels = self._Unique(self.labelList)
+        # color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
+        color_list = ['k', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', '#117733', '#999933',
+                      '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        empty_lists = [[] for _ in range(len(labels))]
+        WL_values = [[] for _ in range(len(labels))]
+        WN_values = [[] for _ in range(len(labels))]
+        for spectrum in self.spectra:
+            for i in range(len(labels)):
+                if spectrum.label == labels[i]:  # ca va pt chier ici
+                    empty_lists[i].append(spectrum.counts)
+                    if len(WL_values[i]) == 0:
+                        WL_values[i] = spectrum.wavelenghts
+                        WN_values[i] = spectrum.wavenumbers
+
+        data_ordered = empty_lists
+        data_means = []
+        data_STD = []
+        for i in range(len(labels)):
+            data_means.append(np.mean(data_ordered[i], axis=0))
+            data_STD.append(np.std(data_ordered[i], axis=0))
+
+        if WN == False:
+            for i in range(len(labels)):
+                plt.plot(WL_values[i], data_means[i], color=color_list[i])
+                plt.fill_between(WL_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
+                                 color=color_list[i], alpha=0.5)
+            plt.xlabel('Wavelengths [nm]')
+
+        if WN == True:
+            for i in range(len(labels)):
+                plt.plot(WN_values[i], data_means[i], color=color_list[i])
+                plt.fill_between(WN_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
+                                 color=color_list[i], alpha=0.5)
+            plt.xlabel('Wavenumbers [cm-1]')
+        plt.ylabel('Counts [-]')
+
+        if display_label == True:
+            for i in range(len(labels)):
+                plt.plot([], [], label=labels[i], color=color_list[i])
+            plt.legend()
+
+        plt.show()
 
     def removeThermalNoise(self, TNToRemove):
         for spectrum in self.spectra:
             spectrum.removeThermalNoise(TNToRemove)
 
-
     def subtract(self, specToSub, specToSub_AcqTime=1):
         if type(specToSub) != Spectrum:
             for spectrum in self.spectra:
-                spectrum.counts = list(np.array(spectrum.counts) - (spectrum.integrationTime * np.array(specToSub) / specToSub_AcqTime))
+                spectrum.counts = list(
+                    np.array(spectrum.counts) - (spectrum.integrationTime * np.array(specToSub) / specToSub_AcqTime))
 
         if type(specToSub) == Spectrum:
             for spectrum in self.spectra:
-                spectrum.counts = list(np.array(spectrum.counts) - (spectrum.integrationTime * np.array(specToSub.counts) / specToSub.integrationTime))
-
+                spectrum.counts = list(np.array(spectrum.counts) - (
+                            spectrum.integrationTime * np.array(specToSub.counts) / specToSub.integrationTime))
 
     def smooth(self):
         for spectrum in self.spectra:
             spectrum.smooth()
-
 
     def fixAberations(self, threshold=3.5, display=False):
         for spectrum in self.spectra:
             spectrum.fixAberations(threshold=threshold, display=display)
         self._loadData()
 
-
     def normalizeIntegration(self):
         for spectrum in self.spectra:
             spectrum.normalizeIntegration()
-
 
     def normalizeCounts(self):
         for spectrum in self.spectra:
             spectrum.normalizeCounts()
 
-
     def normalizeTime(self):
         for spectrum in self.spectra:
             spectrum.normalizeTime()
-
 
     def _getSpectraSum(self):
         datashape = np.shape(self.spectra[0].counts)
@@ -1182,14 +1223,12 @@ class Spectra:
             sum += spectrum.counts
         self.spectraSum = sum
 
-
     def _getSpectraAVG(self):
         datashape = np.shape(self.spectra[0].counts)
         AVG = np.zeros(datashape)
         for spectrum in self.spectra:
             AVG += (np.array(spectrum.counts) / len(self.spectra))
         self.spectraAVG = AVG
-
 
     def add(self, *items):
         for item in items:
@@ -1204,7 +1243,6 @@ class Spectra:
                     for i in item.annotations:
                         self.annotations.append(i)
 
-
                 after = len(self.spectra)
                 assert after == (before + len(
                     item.spectra)), 'The spectra that were supposed to be added to this object have not been properly added'
@@ -1218,20 +1256,17 @@ class Spectra:
 
         self._loadData()
 
-
     def cut(self, start, end, WN=False, WL=False):
         for Spectrum in self.spectra:
             Spectrum.cut(start, end, WN, WL)
         self._loadData()
-
 
     def remove(self, start, end, WN=False, WL=False):
         for Spectrum in self.spectra:
             Spectrum.remove(start, end, WN, WL)
         self._loadData()
 
-
-    def pca(self, nbOfComp = 10, SC=False, ):
+    def pca(self, nbOfComp=10, SC=False):
         self._loadData()
         data = self.data
         if SC == True:
@@ -1244,8 +1279,8 @@ class Spectra:
         for i in range(nbOfComp):
             self.SV.append(self.PCA.singular_values_[i])
             self.EVR.append(self.PCA.explained_variance_ratio_[i])
-            self.PC.append(Spectrum(self.spectra[0].wavelenghts, self.PCA.components_[i], 1, 'PC{0}, val propre = {1}'.format(i + 1, self.PCA.explained_variance_ratio_[i])))
-
+            self.PC.append(Spectrum(self.spectra[0].wavelenghts, self.PCA.components_[i], 1,
+                                    'PC{0}, val propre = {1}'.format(i + 1, self.PCA.explained_variance_ratio_[i])))
 
     def subtractPCToData(self, PC):
         self._getSpectraAVG()
@@ -1268,17 +1303,17 @@ class Spectra:
 
         return newData
 
-
     def pcaDisplay(self, *PCs, WN=False):
         if WN == True:
             for PC in PCs:
                 plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+            plt.xlabel('Wavenumbers [cm-1]')
         if WN == False:
             for PC in PCs:
                 plt.plot(self.spectra[0].wavelenghts, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+            plt.xlabel('Wavelengths [nm]')
         plt.legend()
         plt.show()
-
 
     def _getPCAdf(self, SC=False):
         self._loadData()
@@ -1300,7 +1335,6 @@ class Spectra:
 
         self.pca_df = pd.DataFrame(pca_data, index=self.PCAlabels, columns=self.PCAcolumns)
 
-
     def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False):
         self._loadData()
         self._getPCAdf()
@@ -1314,17 +1348,20 @@ class Spectra:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels)
 
                 if PCy != None and PCz != None:
-                    fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=self.PCAlabels)
+                    fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
+                                        z='PC{0}'.format(PCz), color=self.PCAlabels)
 
             if show_annotations == True:
                 if PCy == None and PCz == None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, text=self.annotations)
 
                 if PCz == None and PCy != None:
-                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels, text=self.annotations)
+                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels,
+                                     text=self.annotations)
 
                 if PCy != None and PCz != None:
-                    fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz),
+                    fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
+                                        z='PC{0}'.format(PCz),
                                         color=self.PCAlabels, text=self.annotations)
 
         if AnnotationToDisplay != None:
@@ -1346,7 +1383,8 @@ class Spectra:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels)
 
                 if PCy != None and PCz != None:
-                    fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz), color=temp_PCAlabels)
+                    fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
+                                        z='PC{0}'.format(PCz), color=temp_PCAlabels)
 
             if show_annotations == True:
 
@@ -1355,16 +1393,20 @@ class Spectra:
                     temp_annotations.append(self.annotations[i])
                 if PCy == None and PCz == None:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, text=temp_annotations)
+                    print('ok')
 
                 if PCz == None and PCy != None:
-                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels, text=temp_annotations)
+                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels,
+                                     text=temp_annotations)
+                    print('ok')
 
                 if PCy != None and PCz != None:
-                    fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), z='PC{0}'.format(PCz),
+                    fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
+                                        z='PC{0}'.format(PCz),
                                         color=temp_PCAlabels, text=temp_annotations)
+                    print('ok')
 
         plot(fig)
-
 
     def getSTD(self):
         ratios = []
@@ -1377,13 +1419,13 @@ class Spectra:
             STD = np.std(data)
             mean = np.mean(data)
             means.append(mean)
-            ratio = mean/(STD**2)
+            ratio = mean / (STD ** 2)
             ratios.append(ratio)
 
             print('WL: {3},mean: {0}, STD: {1}, ratio: {2}'.format(mean, STD, ratio, WL))
 
         plt.plot(self.spectra[0].wavelenghts, ratios)
-        plt.plot(self.spectra[0].wavelenghts, np.array(self.spectra[0].counts)/600)
+        plt.plot(self.spectra[0].wavelenghts, np.array(self.spectra[0].counts) / 600)
         plt.xlabel('Wavelenghts [cm-1]')
         plt.ylabel('Ratio [photons / counts]')
         plt.show()
@@ -1393,16 +1435,13 @@ class Spectra:
         plt.ylabel('Ratio [Photon/count]')
         plt.show()
 
-
     def setZero(self, val):
         for spectrum in self.spectra:
             spectrum.setZero(val)
 
-
     # def fixSpec(self):
     #     for spectrum in self.spectra:
     #         spectrum.fixSpec()
-
 
     def _standardizeData(self, replace=False):
         self.SCData = StandardScaler().fit_transform(self.data)
@@ -1411,18 +1450,15 @@ class Spectra:
                 self.spectra[i].counts = self.SCData[i]
         self._loadData()
 
-
     def fft(self, show=False, replace=False, return_fit=False, fc=0.001, b=0.04, shift=54):
         for spectrum in self.spectra:
             spectrum.fft(show, replace, return_fit, fc, b, shift)
-
 
     def polyfit(self, poly_order, show=False, replace=False, return_fit=False):
         for spectrum in self.spectra:
             spectrum.polyfit(poly_order, show, replace, return_fit)
 
-
-    def lda(self, n_components=2, SC=False):
+    def lda(self, n_components=1, SC=False, WN=True):
         # might be usless since ldaScatterplot is doing this again
         # I dont really understand the n_component stuff going on
         self._loadData()
@@ -1431,68 +1467,25 @@ class Spectra:
 
         data = self.data
 
-        if SC == True:
-            self._standardizeData()
-            assert len(self.SCData) == len(self.labelList), "'SCdata' and 'label' arrays must be the same lenght"
-            data = self.SCData
+        # if SC == True:
+        #     self._standardizeData()
+        #     assert len(self.SCData) == len(self.labelList), "'SCdata' and 'label' arrays must be the same lenght"
+        #     data = self.SCData
 
         self.LDA = LinearDiscriminantAnalysis(n_components=n_components)
-        self.LDA.fit(data, self.labelList)
+        LDA_comp = self.LDA.fit(data, self.labelList)
 
-        # print('coefs: ', self.LDA.coef_)
-        # print('intercept: ', self.LDA.intercept_)
-        # print('covariance: ', self.LDA.covariance_)
-        # print('explained variance ratio: ', self.LDA.explained_variance_ratio_)
-        # print('means: ', self.LDA.means_)
-        # print('priors: ', self.LDA.priors_)
-        # print('scalings: ', np.shape(self.LDA.scalings_), self.LDA.scalings_)
-        # print('xbar: ', self.LDA.xbar_)
-        # print('classes: ', self.LDA.classes_)
-        # print('features: ', self.LDA.n_features_in_)
-        # print('features names: ', self.LDA.feature_names_in_)
-
-
-        # plt.plot(self.LDA.scalings_.T[0], label='scaling transposed 1')
-        # plt.plot(self.LDA.scalings_.T[1], label='scaling transposed 2')
-        # plt.plot(self.LDA.scalings_.T[2], label='scaling transposed 3')
-        # plt.plot(self.LDA.scalings_.T[3], label='scaling transposed 4')
-        # plt.plot(self.LDA.scalings_.T[4], label='scaling transposed 5')
-        # plt.legend()
-        # plt.title('scaling transposed')
-        # plt.show()
-
-
-        # plt.plot(self.spectra[0].counts)
-        # plt.title('spectrum :' + self.spectra[0].label)
-        # plt.show()
-
-        # plt.plot(self.LDA.coef_[0], label='coef 1')
-        # plt.plot(self.LDA.coef_[1], label='coef 2')
-        # plt.plot(self.LDA.coef_[2], label='coef 3')
-        # plt.plot(self.LDA.coef_[3], label='coef 4')
-        # plt.plot(self.LDA.coef_[4], label='coef 5')
-        # plt.plot(self.LDA.coef_[5], label='coef 6')
-        # plt.legend()
-        # plt.title('LDA coefficients')
-        # plt.show()
-
-        # plt.plot(self.LDA.means_[0], label='mean 1')
-        # plt.plot(self.LDA.means_[1], label='mean 2')
-        # plt.plot(self.LDA.means_[2], label='mean 3')
-        # plt.plot(self.LDA.means_[3], label='mean 4')
-        # plt.plot(self.LDA.means_[4], label='mean 5')
-        # plt.plot(self.LDA.means_[5], label='mean 6')
-        # plt.legend()
-        # plt.title('LDA means')
-        # plt.show()
-
-        # plt.plot(self.LDA.xbar_, label='xbar')
-        # plt.title('xbar')
-        # plt.show()
-
+        if WN == False:
+            plt.plot(self.spectra[0].wavelenghts, abs(LDA_comp.coef_[0]))
+            plt.xlabel('Wavelengths [nm]')
+        if WN == True:
+            plt.plot(self.spectra[0].wavenumbers, abs(LDA_comp.coef_[0]))
+            plt.xlabel('Wavenumbers [cm-1]')
+        plt.show()
 
     def ldaScatterPlot(self, LDx, LDy=None, LDz=None, SC=False):
         self._loadData()
+        self.lda()
 
         data = self.data
         if SC == True:
@@ -1518,10 +1511,10 @@ class Spectra:
             fig = px.scatter(self.lda_df, x='LD{0}'.format(LDx), y='LD{0}'.format(LDy), color=labels)
 
         if LDy != None and LDz != None:
-            fig = px.scatter_3d(self.lda_df, x='LD{0}'.format(LDx), y='LD{0}'.format(LDy), z='LD{0}'.format(LDz), color=labels)
+            fig = px.scatter_3d(self.lda_df, x='LD{0}'.format(LDx), y='LD{0}'.format(LDy), z='LD{0}'.format(LDz),
+                                color=labels)
 
         plot(fig)
-
 
     def ldaOnPCsScatteredPlot(self, LDx, LDy=None, n_components=2):
         self._loadData()
@@ -1584,11 +1577,9 @@ class Spectra:
 
         plot(fig)
 
-
     def changeXAxisValues(self, ref, print_info=False):
         for spectrum in self.spectra:
             spectrum.changeXAxisValues(ref, print_info)
-
 
     def kpca(self, nbOfComp=10):
         self._loadData()
@@ -1629,7 +1620,7 @@ class Spectra:
         print(metrics.classification_report(y_test, y_pred))
         # classifier = grid
 
-        #visualise train set
+        # visualise train set
         # X_set, y_set = X_train, y_train
         # X1, X2 = np.meshgrid(np.arange(start=X_set[:, 0].min() - 1, stop=X_set[:, 0].max() + 1, step=0.01),
         #                      np.arange(start=X_set[:, 1].min() - 1, stop=X_set[:, 1].max() + 1, step=0.01))
@@ -1648,37 +1639,66 @@ class Spectra:
         # plt.legend()
         # plt.show()
 
-        #visualise test set
+        # visualise test set
 
-
-    def umap(self):
+    def umap(self, n_components=2, n_neighbors=15, metric='euclidean', min_dist=0.1, title=None, display=True):
         self._loadData()
+        if title == None:
+            title = '{0} neighbors'.format(n_neighbors)
 
-        umap_2d = UMAP(n_components=2, init='random', random_state=0)
+        if n_components == 2:
+            self.umap_2d = UMAP(n_components=n_components, n_neighbors=n_neighbors, metric=metric, min_dist=min_dist, init='random', random_state=0)
+            self.UMAP_proj_2d = self.umap_2d.fit_transform(self.data)
 
-        proj_2d = umap_2d.fit_transform(self.data)
+            if display == True:
+                fig_2d = px.scatter(
+                    self.UMAP_proj_2d, x=0, y=1,
+                    color=self.labelList, labels=self.labelList, title=title)
 
-        fig_2d = px.scatter(
-            proj_2d, x=0, y=1,
-            color=self.labelList, labels=self.labelList
-        )
+                fig_2d.show()
 
-        fig_2d.show()
+        if n_components == 3:
+            self.umap_3d = UMAP(n_components=n_components, n_neighbors=n_neighbors, metric=metric, min_dist=min_dist,
+                           init='random', random_state=0)
+            self.UMAP_proj_3d = self.umap_3d.fit_transform(self.data)
 
+            if display == True:
+                fig_3d = px.scatter_3d(
+                    self.UMAP_proj_3d, x=0, y=1, z=2,
+                    color=self.labelList, labels=self.labelList, title=title)
 
-    def tsne(self):
+                fig_3d.show()
+
+    def tsne(self, n_components=2, perplexity=30, metric='euclidean', title=None, display=True):
         self._loadData()
+        if title == None:
+            title = 'perplexity = {0}'.format(perplexity)
 
-        tsne_2d = TSNE(n_components=2, random_state=0)
+        if n_components == 2:
+            self.tsne_2d = TSNE(n_components=n_components, perplexity=perplexity, metric=metric,
+                           init='random', random_state=0)
 
-        proj_2d = tsne_2d.fit_transform(self.data)
+            self.TSNE_proj_2d = self.tsne_2d.fit_transform(self.data)
 
-        fig_2d = px.scatter(
-            proj_2d, x=0, y=1,
-            color=self.labelList, labels=self.labelList
-        )
+            if display == True:
+                fig_2d = px.scatter(
+                    self.TSNE_proj_2d, x=0, y=1,
+                    color=self.labelList, labels=self.labelList, title=title)
 
-        fig_2d.show()
+                fig_2d.show()
+
+        if n_components == 3:
+            self.tsne_3d = TSNE(n_components=n_components, perplexity=perplexity, metric=metric,
+                           init='random', random_state=0)
+
+            self.TSNE_proj_3d = self.tsne_3d.fit_transform(self.data)
+
+            if display == True:
+                fig_3d = px.scatter_3d(
+                    self.TSNE_proj_3d, x=0, y=1, z=2,
+                    color=self.labelList, labels=self.labelList, title=title)
+
+                fig_3d.show()
 
     def getAbsorbance(self, ref):  # ref needs to be a Spectrum object
         abs_spectra = []
@@ -1686,16 +1706,17 @@ class Spectra:
             abs_spectra.append(spectrum.getAbsorbance(ref))
         return Spectra(abs_spectra)
 
-
     def removeSpectra(self, start, end):
         del self.spectra[start: end]
         self._loadData()
 
-
-    def plotPCOnBarCode(self, PC, BarCode, shift=0):
+    def plotPCOnBarCode(self, PC, shift=0):
         self._loadData()
         self._getPCAdf()
-        assert len(BarCode) == len(self.pca_df), 'You should have elements in the PCs dataframe then in the BarCode provided. Right nopw, you have {0} elements in the PCs dataframe and {1} elements in the BarCode'.format(len(self.pca_df), len(BarCode))
+        BarCode = np.array(self.labelList)
+        assert len(BarCode) == len(
+            self.pca_df), 'You should have as many elements in the PCs dataframe then in the BarCode provided. Right now, you have {0} elements in the PCs dataframe and {1} elements in the BarCode'.format(
+            len(self.pca_df), len(BarCode))
         digital_BarCode = []
         for i in range(len(BarCode)):
             if BarCode[i] == 'WHITE':
@@ -1711,9 +1732,10 @@ class Spectra:
         PCdata = PCdata / expansion
         new_min = np.amin(PCdata)
         PCdata = PCdata - new_min
-        assert len(digital_BarCode) == len(PCdata), 'Some labels in the BarCode are probably wrong! Make sure that all elements in the BarCod are either "WHITE", "GREY" or "MIXED"'
+        assert len(digital_BarCode) == len(
+            PCdata), 'Some labels in the BarCode are probably wrong! Make sure that all elements in the BarCod are either "WHITE", "GREY" or "MIXED"'
         x = np.array(range(len(PCdata)))
-        x = x / 10 # now in mm
+        x = x / 10  # now in mm
         x_shift = x + shift
 
         plt.plot(x, PCdata, 'r', label='PC{0}'.format(PC))
@@ -1722,7 +1744,195 @@ class Spectra:
         plt.legend()
         plt.show()
 
+    def shiftSpectra(self, shift):  # shift in nb of data
+        # shift positiv will shift the data to the left
+        # shift negative will shift self.labelList to the left
+        if shift > 0:
+            self.spectra = np.delete(self.spectra, np.s_[:shift:])
+            for i in range(len(self.spectra)):
+                self.spectra[i].label = self.labelList[i]
+            self._loadData()
+        if shift < 0:
+            for i in range(len(self.spectra) - abs(shift)):
+                self.spectra[i].label = self.labelList[i + abs(shift)]
+            self.spectra = np.delete(self.spectra, np.s_[len(self.spectra) - abs(shift)::])
+            self._loadData()
 
-    def shiftSpectra(self, shift): #shift in nb of data (each, point is 100um)
-        # shift positiv will shift the bar
-        print('hello')
+    def removeMean(self):
+        for spectrum in self.spectra:
+            spectrum.removeMean()
+        self._loadData()
+
+    def savgolFilter(self, window_length=51, order=2):
+        for spectrum in self.spectra:
+            spectrum.savgolFilter(window_length=window_length, order=order)
+        self._loadData()
+
+    def combineSpectra(self, add):
+        # returns a new spectra object
+        spectra_list = []
+        for i in range(0, len(self.spectra) - add, add):
+            new_spec = self.spectra[i]
+            for j in range(i + 1, i + add):
+                new_spec = new_spec.addSpectra(self.spectra[j])
+                new_spec = new_spec.sumSpec()
+            spectra_list.append(new_spec)
+
+        return Spectra(spectra_list)
+
+    def kmean(self, data, n_clusters=2, graph=False, barcode=False):
+
+        if data == 'PCA':
+            kmeans = KMeans(n_clusters=n_clusters).fit(self.PCAcolumns.astype("double"))
+            raw = self.PCAcolumns
+
+        elif data == 'UMAP2d':
+            kmeans = KMeans(n_clusters=n_clusters).fit(self.UMAP_proj_2d.astype("double"))
+            raw = self.UMAP_proj_2d
+
+        elif data == 'UMAP3d':
+            kmeans = KMeans(n_clusters=n_clusters).fit(self.UMAP_proj_3d.astype("double"))
+            raw = self.UMAP_proj_3d
+
+        elif data == 'TSNE2d':
+            kmeans = KMeans(n_clusters=n_clusters).fit(self.TSNE_proj_2d.astype("double"))
+            raw = self.TSNE_proj_2d
+
+        elif data == 'TSNE3d':
+            kmeans = KMeans(n_clusters=n_clusters).fit(self.TSNE_proj_3d.astype("double"))
+            raw = self.TSNE_proj_3d
+
+        else:
+            raise ValueError('"{0}" does not correspond to an expected str.'.format(data))
+
+        if barcode == True:
+            BarCode = np.array(self.labelList)
+            assert len(BarCode) == len(
+                kmeans.labels_), 'You should have as many elements in the PCs dataframe then in the BarCode provided. Right now, you have {0} elements in the PCs dataframe and {1} elements in the BarCode'.format(
+                len(self.pca_df), len(BarCode))
+            digital_BarCode = []
+            for i in range(len(BarCode)):
+                if BarCode[i] == 'WHITE':
+                    digital_BarCode.append(1)
+                if BarCode[i] == 'MIXED':
+                    digital_BarCode.append(0.5)
+                if BarCode[i] == 'GREY':
+                    digital_BarCode.append(0)
+
+            assert len(digital_BarCode) == len(
+                kmeans.labels_), 'Some labels in the BarCode are probably wrong! Make sure that all elements in the BarCod are either "WHITE", "GREY" or "MIXED"'
+            x = np.array(range(len(kmeans.labels_)))
+            x = x / 2  # now in mm
+
+            #compute accuracy
+            right = 0
+            wrong = 0
+            for i in range(len(kmeans.labels_)):
+                if kmeans.labels_[i] == digital_BarCode[i]:
+                    right += 1
+                else:
+                    wrong += 1
+            ratio = right / (right + wrong)
+            if ratio < 0.5:
+                ratio = 1 - ratio
+
+            plt.plot(x, kmeans.labels_, 'ro', label=data + 'accuracy = {0}'.format(ratio))
+            plt.plot(x, digital_BarCode, 'ko', label='BarCode')
+            plt.xlabel('Distance [mm]')
+            plt.legend()
+            plt.show()
+
+        if graph == True:
+            centers = kmeans.cluster_centers_
+
+            mid_point_x = np.mean(centers[:, 0])
+            mid_point_y = np.mean(centers[:, 1])
+            slope = (centers[1][1] - centers[0][1]) / (centers[1][0] - centers[0][1])
+            inverse_slope = (-1)/slope
+            b = mid_point_y - (inverse_slope * mid_point_x)
+            # y = inverse_slope * x + b
+
+            # Step size of the mesh. Decrease to increase the quality of the VQ.
+            h = 0.1  # point in the mesh [x_min, x_max]x[y_min, y_max].
+
+            # Plot the decision boundary. For that, we will assign a color to each
+            x_min, x_max = raw[:, 0].min(), raw[:, 0].max()
+            y_min, y_max = raw[:, 1].min(), raw[:, 1].max()
+            xx, yy = np.arange(x_min, x_max, h), np.arange(y_min, y_max, h)
+
+            # Points to draw the line between:
+            y_slope = []
+            x_slope = []
+            # Calculate y for x_min:
+            Y_xmin = inverse_slope * x_min + b
+            if Y_xmin >= y_max:
+                y = y_max
+                x = (y_max - b) / inverse_slope
+                y_slope.append(y)
+                x_slope.append(x)
+            if Y_xmin <= y_min:
+                y = y_min
+                x = (y_min - b) / inverse_slope
+                y_slope.append(y)
+                x_slope.append(x)
+            if y_min < Y_xmin < y_max:
+                y = Y_xmin
+                x = x_min
+                y_slope.append(y)
+                x_slope.append(x)
+            # Calculate y for x_max:
+            Y_xmax = inverse_slope * x_max + b
+            if Y_xmax >= y_max:
+                y = y_max
+                x = (y_max - b) / inverse_slope
+                y_slope.append(y)
+                x_slope.append(x)
+            if Y_xmax <= y_min:
+                y = y_min
+                x = (y_min - b) / inverse_slope
+                y_slope.append(y)
+                x_slope.append(x)
+            if y_min < Y_xmax < y_max:
+                y = Y_xmax
+                x = x_min
+                y_slope.append(y)
+                x_slope.append(x)
+
+            assert len(x_slope) == 2, 'There has been a problem calculating the slope of the kmean decision matrix'
+            assert len(y_slope) == 2, 'There has been a problem calculating the slope of the kmean decision matrix'
+
+            cluster_array = []
+            for i in xx:
+                for j in yy:
+                    cluster_array.append([i, j])
+            cluster_array = np.array(cluster_array)
+            cluster_labels = kmeans.predict(cluster_array)
+
+            verif_dim = str(raw)
+            if '3d' in verif_dim:
+                fig_3d = px.scatter_3d(
+                    raw, x=0, y=1, z=2,
+                    color=self.labelList, labels=self.labelList)
+                fig_3d.add_trace(go.Scatter3d(mode='markers',
+                    x=centers[:, 0], y=centers[:, 1], z=centers[:, 2], marker=dict(
+                    color='black', size=20, opacity=0.5), name='Cluster center'))
+                fig_3d.show()
+
+            else:
+                fig_2d = px.scatter(
+                    raw, x=0, y=1,
+                    color=self.labelList, labels=self.labelList)
+                fig_2d.add_trace(go.Scatter(mode='markers',
+                    x=centers[:, 0], y=centers[:, 1], marker=dict(
+                    color='black', size=20, opacity=0.5), name='Cluster center'))
+                fig_2d.add_trace(go.Scatter(mode='markers',
+                    x=cluster_array[:, 0], y=cluster_array[:, 1], marker=dict(
+                    color=cluster_labels, opacity=0.1), name='kmean clusters colored'))
+                fig_2d.add_trace(go.Scatter(mode='lines',
+                    x=x_slope, y=y_slope, marker=dict(color='black'), name='kmean separator'))
+
+                fig_2d.show()
+
+
+
+

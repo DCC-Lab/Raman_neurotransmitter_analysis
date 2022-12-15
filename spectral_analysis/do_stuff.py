@@ -626,7 +626,10 @@ WHITE.addAnnotation('WHITE')
 
 # data = GREY
 # data.add(WHITE)
-
+# data.cut()
+# # data.normalizeIntegration()
+# data.pca()
+# data.pcaDisplay(1, 2, 3)
 
 
 
@@ -715,40 +718,56 @@ WHITE.addAnnotation('WHITE')
 # blooderini.display(WN=False)
 
 def RamanBrainGrayWhite():
-    grey = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/gris/').spectra()
-    white = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectra()
+    grey = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/gris/').spectraSum()
+    # grey.changeLabel('Grey')
+    white = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/Monkey_brain/blanc/').spectraSum()
+    # white.changeLabel('White')
     data = grey
-    data.add(white)
+    data = data.addSpectra(white)
     data.removeThermalNoise(nbg)
-    data.cut(30, 1040)
-    data.fixAberations()
-    data.display2ColoredMeanSTD(label1='gris', label2='blanc')
-    data.cut(400, 1600, WN=True)
-    data.polyfit(4, replace=True)
-    data.normalizeIntegration()
-    data.display2ColoredMeanSTD(label1='gris', label2='blanc')
-    data.pca()
-    data.pcaScatterPlot(1, 2)
-    data.pcaScatterPlot(3, 4)
-    data.pcaScatterPlot(5, 6)
-    data.pcaDisplay(1, 2, 3)
-    data.pcaDisplay(4, 5, 6)
-    data.umap()
+    data.cut(2800, 3075, WN=True)
+
+    # data.fixAberations()
+    # data.cut(2800, 2950, WN=True)
+    # data.normalizeIntegration()
+    # data.spectra[0].display()
+    # data.polyfit(3, replace=True)
+    # data.smooth()
+    data.display(WN=True)
+    # data.pca()
+    # data.ldaScatterPlot(1)
+    # data.pcaScatterPlot(1, 2)
+
+    # data.pcaScatterPlot(3, 4)
+
+    # data.pcaScatterPlot(5, 6)
+
+    # data.pcaDisplay(1, 2, 3, WN=True)
+    # data.pcaDisplay(4, 5, 6)
 
 
 def NaClDataDisplayAndPCA():
     water = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/water/').spectra()
+    waterSum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/water/').spectraSum()
     NaCl_max = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/NaCl_max/').spectra()
     NaCl_few = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220913/NaCl_few/').spectra()
+    waterSum.removeThermalNoise(nbg)
+    waterSum.cut(20, None)
+    waterSum.normalizeIntegration()
 
-    data = water
-    data.add(NaCl_max, NaCl_few)
+    data = NaCl_few
+    data.add(NaCl_max, water)
     data.removeThermalNoise(nbg)
-    data.cut(500, None, WN=True)
     data.normalizeIntegration()
-    data.display3ColoredMeanSTD(label1='water', label2='NaCl_max', label3='NaCl_few', WN=True)
-    data.pca()
-    data.pcaScatterPlot(1, 2)
-    data.pcaScatterPlot(3, 4)
-    data.pcaDisplay(1, 2)
-    data.pcaDisplay(3, 4)
+    data.displayMeanSTD(WN=False)
+    # waterSum.integrationTime = data.spectra[0].integrationTime
+    # data.removeThermalNoise(nbg)
+    # data.cut(20, None)
+    # data.normalizeIntegration()
+    # data.subtract(waterSum)
+    #
+    # data.displayMeanSTD(WN=True)
+
+
+# NaClDataDisplayAndPCA()
+RamanBrainGrayWhite()
