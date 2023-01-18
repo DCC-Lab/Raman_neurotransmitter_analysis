@@ -6,8 +6,21 @@ import matplotlib.pyplot as plt
 import os
 from dcclab.database import *
 import random
+import gym
 
 
+env = gym.make("LunarLander-v2", render_mode="human")
+env.action_space.seed(42)
+
+observation, info = env.reset(seed=42)
+
+for _ in range(1000):
+    observation, reward, terminated, truncated, info = env.step(env.action_space.sample())
+
+    if terminated or truncated:
+        observation, info = env.reset()
+
+env.close()
 
 
 def BarCode(Section, length, TW, TM, TG):
@@ -524,6 +537,6 @@ def ElaheData():
 # RMLensesOptimisation()
 # PCAOnAllMonkeyData()
 # LabDRS()
-VealBrain()
+# VealBrain()
 # ScaleWhiteRef()
 # ElaheData()

@@ -20,6 +20,9 @@ from umap import UMAP
 from sklearn.manifold import TSNE
 from scipy.signal import savgol_filter
 from sklearn.cluster import KMeans
+from scipy import signal
+from sklearn.metrics import accuracy_score
+import itertools
 import random
 
 
@@ -885,6 +888,13 @@ class Spectrum:
     def savgolFilter(self, window_length=40, order=2):
         self.counts = savgol_filter(self.counts, window_length, order, mode="nearest")
 
+    def butterworthFilter(self, cutoff_frequency=5, order=2):
+        nyquist_frequency = 0.5 * len(self.counts)
+        cutoff_frequency = cutoff_frequency / nyquist_frequency
+        b, a = signal.butter(order, cutoff_frequency, btype='low', analog=False)
+        filtered_intensities = signal.filtfilt(b, a, self.counts)
+        self.counts =  self.counts - filtered_intensities
+
 
 class Spectra:
     def __init__(self, items):
@@ -1408,7 +1418,7 @@ class Spectra:
 
         plot(fig)
 
-    def getSTD(self):
+    def getRatioPhotonPerCount(self):
         ratios = []
         means = []
         for val in range(len(self.spectra[0].wavelenghts)):
@@ -1773,14 +1783,22 @@ class Spectra:
         spectra_list = []
         for i in range(0, len(self.spectra) - add, add):
             new_spec = self.spectra[i]
+            int_time = new_spec.integrationTime
             for j in range(i + 1, i + add):
-                new_spec = new_spec.addSpectra(self.spectra[j])
-                new_spec = new_spec.sumSpec()
-            spectra_list.append(new_spec)
+                if new_spec.label == self.spectra[j].label:
+
+                    new_spec = new_spec.addSpectra(self.spectra[j])
+                    new_spec = new_spec.sumSpec()
+                    new_spec.label = self.spectra[j].label
+            if new_spec.integrationTime == int_time * add:
+                spectra_list.append(new_spec)
+            else:
+                print('For label "{0}", some data were left behind due to a number of spectra that does not divide by {1}'.format(new_spec.label, add))
 
         return Spectra(spectra_list)
 
-    def kmean(self, data, n_clusters=2, graph=False, barcode=False):
+    def kmeanSHAV(self, data, n_clusters=2, graph=False, barcode=False, barplot=False, title=None):
+        # barcode should be used for SHAV like data when labels are 'WHITE', 'GREY' and 'MIXTED'
 
         if data == 'PCA':
             kmeans = KMeans(n_clusters=n_clusters).fit(self.PCAcolumns.astype("double"))
@@ -1832,15 +1850,17 @@ class Spectra:
                     right += 1
                 else:
                     wrong += 1
-            ratio = right / (right + wrong)
-            if ratio < 0.5:
-                ratio = 1 - ratio
+            self.kmean_accuracy_ratio = right / (right + wrong)
+            if self.kmean_accuracy_ratio < 0.5:
+                self.kmean_accuracy_ratio = 1 - self.kmean_accuracy_ratio
 
-            plt.plot(x, kmeans.labels_, 'ro', label=data + 'accuracy = {0}'.format(ratio))
-            plt.plot(x, digital_BarCode, 'ko', label='BarCode')
-            plt.xlabel('Distance [mm]')
-            plt.legend()
-            plt.show()
+            if barplot == True:
+                plt.plot(x, kmeans.labels_, 'ro', label=data + 'accuracy = {0}'.format(self.kmean_accuracy_ratio))
+                plt.plot(x, digital_BarCode, 'ko', label='BarCode')
+                plt.xlabel('Distance [mm]')
+                plt.title(title)
+                plt.legend()
+                plt.show()
 
         if graph == True:
             centers = kmeans.cluster_centers_
@@ -1921,7 +1941,7 @@ class Spectra:
             else:
                 fig_2d = px.scatter(
                     raw, x=0, y=1,
-                    color=self.labelList, labels=self.labelList)
+                    color=self.labelList, labels=self.labelList, title=title)
                 fig_2d.add_trace(go.Scatter(mode='markers',
                     x=centers[:, 0], y=centers[:, 1], marker=dict(
                     color='black', size=20, opacity=0.5), name='Cluster center'))
@@ -1933,6 +1953,58 @@ class Spectra:
 
                 fig_2d.show()
 
+    def getMeanSTD(self):
+        sums = []
+        for spectrum in self.spectra:
+            sums.append(np.sum(spectrum.counts))
+
+        means = np.mean(sums)
+        STD = np.std(sums)
+        return means, STD
+
+    def butterworthFilter(self, cutoff_frequency=5, order=2):
+        for spectrum in self.spectra:
+            spectrum.butterworthFilter(cutoff_frequency=cutoff_frequency, order=order)
+        self._loadData()
+
+    @staticmethod
+    def createLabelPermutations(labels):
+        unique_labels = np.unique(labels)
+        permutations = list(itertools.permutations(unique_labels))
+        new_permutations = []
+        for perm in permutations:
+            new_perm = [perm[np.where(unique_labels == label)[0][0]] for label in labels]
+            new_permutations.append(new_perm)
+        return np.array(new_permutations)
+
+    def cluster(self, type):
+        if type == "raw":
+            # Translate string labels to int labels
+            unique_labels = np.unique(self.labelList)
+            label_to_int = {label: i for i, label in enumerate(unique_labels, start=1)}
+            labels = np.array([label_to_int[label] for label in self.labelList])
 
 
+            kmeans = KMeans(n_clusters=len(np.unique(labels)))
+
+            # Fit the model to the spectra data
+            kmeans.fit(self.data)
+
+            # Make predictions for each spectrum
+            predictions = kmeans.predict(self.data)
+
+            # Calculate the accuracy of the predictions
+            best_accuracy = 0
+            for prediction in self.createLabelPermutations(predictions):
+                accuracy = accuracy_score(labels, prediction)
+                print(accuracy)
+                if accuracy >= best_accuracy:
+                    best_accuracy = accuracy
+                    print('Best accuracy calculated yet = {0}'.format(best_accuracy))
+                    print('The correct labels are: {0}'.format(list(prediction)))
+            print('Best accuracy calculated yet = {0}'.format(best_accuracy))
+            return best_accuracy
+
+    def getCopy(self):
+        return Spectra(self.spectra)
 

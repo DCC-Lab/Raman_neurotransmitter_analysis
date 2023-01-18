@@ -118,6 +118,7 @@ def AllRawTracks():
     # # Display ROFF raw
     # DRS_ROFF.display(label=False, WN=False)
 
+
 def normalizedLeftSpectra():
     DRS_LOFF, DRS_LGPI, DRS_LSTN, DRS_ROFF, DRS_RGPI, DRS_RSTN = _getShavData()
 
@@ -327,15 +328,52 @@ def ABS():
 def Umap():
     DRS_LOFF, DRS_LGPI, DRS_LSTN, DRS_ROFF, DRS_RGPI, DRS_RSTN = _getShavData()
 
-    # DRS_LSTN.normalizeIntegration()
-    # DRS_LSTN.smooth()
-    DRS_LSTN.shiftSpectra(10)
-    DRS_LSTN.umap()
-    DRS_LSTN.kmean(data='UMAP2d', n_clusters=2, graph=True)
-    for i in [10, 20, 30, 40, 50, 60]:
-        for j in [0.0, 0.1, 0.3, 0.6, 0.9]:
-            DRS_LSTN.umap(n_components=2, n_neighbors=i, min_dist=j, display=False, title='NN = {0}, MD = {1}'.format(i, j))
-            DRS_LSTN.kmean(data='UMAP2d', graph=True)
+    data = DRS_LGPI
+    data.removeLabel('MIXED')
+    print(data.labelList)
+    data.normalizeIntegration()
+    data.smooth()
+    data.cut(375, 950, WL=True)
+    # data.shiftSpectra(10)
+    # data.displayMeanSTD()
+    shifts = []
+    accuracys = []
+    shift = 0
+    for k in [0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]:
+        shift += k
+        data.shiftSpectra(k)
+        best_accuracy = 0
+        nb_of_equal_ratio = 0
+        equal_meta_data_list = []
+        for i in [10, 20, 30, 40, 50, 60]:
+            for j in [0.0, 0.1, 0.3, 0.6, 0.9]:
+                data.umap(n_components=2, n_neighbors=i, min_dist=j, display=False, title='NN = {0}, MD = {1}'.format(i, j))
+                data.kmeanSHAV(data='UMAP2d', barcode=True, title='NN = {0}, MD = {1}'.format(i, j))
+                ratio = data.kmean_accuracy_ratio
+                if ratio >= best_accuracy:
+                    if ratio > best_accuracy:
+                        nb_of_equal_ratio = 1
+                        equal_meta_data_list = []
+                        equal_meta_data_list.append([i, j])
+                    if ratio == best_accuracy:
+                        nb_of_equal_ratio += 1
+                        equal_meta_data_list.append([i, j])
+
+                    best_accuracy = ratio
+                    meta_data = [i, j]
+        shifts.append(shift)
+        accuracys.append(best_accuracy)
+        print('SHIFT = {0}'.format(shift))
+        print('Best accuracy = {0}'.format(best_accuracy))
+        # print('Parameters : NN = {0}, MD = {1}'.format(meta_data[0], meta_data[1]))
+        print('Nombre de solutions possédant la meilleure accuracy = {0}, les voici: {1}'.format(nb_of_equal_ratio, equal_meta_data_list))
+        # DRS_LSTN.umap(n_components=2, n_neighbors=meta_data[0], min_dist=meta_data[1], display=False, title='NN = {0}, MD = {1}'.format(meta_data[0], meta_data[1]))
+        # DRS_LSTN.kmean(data='UMAP2d', graph=True, barcode=True, barplot=True, title='NN = {0}, MD = {1}'.format(meta_data[0], meta_data[1]))
+
+    plt.plot(shifts, accuracys)
+    plt.xlabel('shift par itérations de 500um [-]')
+    plt.ylabel('Best accuracy obtained with Umap + kmean')
+    plt.show()
 
 
 def tsne():
@@ -344,6 +382,7 @@ def tsne():
     DRS_LSTN.shiftSpectra(10)
     for i in [5, 10, 15, 20, 25, 30, 40, 50]:
         DRS_LSTN.tsne(n_components=2, perplexity=i)
+
 
 # AllRawTracks()
 # normalizedLeftSpectra()
