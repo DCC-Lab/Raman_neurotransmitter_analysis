@@ -186,15 +186,15 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
     # 1 : R2 --> cluster_array : None
     # 2 : Prob --> cluster_array : None
     bg = spectrum.Acquisition(
-        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+        'dn/').spectraSum()
 
     data = []
-    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/'):
+    for dir in os.listdir('test_data/'):
         if dir[0] == '.':
             continue
         data.append(
             spectrum.Acquisition(
-                '/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/' + dir + '/').spectra())
+                'test_data/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
     data.CRRemoval()
