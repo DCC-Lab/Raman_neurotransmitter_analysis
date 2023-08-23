@@ -23,7 +23,7 @@ def VealBrain():
     data.cut(60, -5)
     data.normalizeIntegration()
     data.displayMeanSTD(WN=True)
-    data.pca()
+    # data.pca()
 
     # data.pcaScatterPlot(1, 2)
     #
@@ -321,5 +321,5 @@ def Umap():
 # isoVerif()
 # signalOverDepth()
 # signalOverTime()
-# monkeyBrain()
+monkeyBrain()
 # Umap()

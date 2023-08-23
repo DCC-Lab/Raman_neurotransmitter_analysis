@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 from dcclab.database import *
 import random
+import csv
 
 
 def BarCode(Section, length, TW, TM, TG):
@@ -120,6 +121,8 @@ def AllRawTracks():
 
 
 def normalizedLeftSpectra():
+    WR = spectrum.Acquisition('/Users/antoinerousseau/Desktop/ddpaoli/20161128_ProbeCharacterization/WR/', fileType='Depaoli').spectraSum()
+    WR.integrationTime = 26 * 0.025
     DRS_LOFF, DRS_LGPI, DRS_LSTN, DRS_ROFF, DRS_RGPI, DRS_RSTN = _getShavData()
 
     DRS_LOFF.changeLabel('LOFF')
@@ -147,6 +150,15 @@ def normalizedLeftSpectra():
     # DRS_LOFF.normalizeIntegration()
     # DRS_LOFF.display(label=False, WN=False)
 
+    # DRS_LOFF.add(DRS_LSTN, DRS_LGPI)
+    data = DRS_LOFF.getAbsorbance(WR)
+    # data.smooth(n=11)
+    data.cut(450, 900, WL=True)
+    # data.cut(450, 700, WL=True)
+    # data.displayMeanSTD()
+    data.pca()
+    data.pcaDisplay(1, 2, 3, 4)
+    # data.pcaDisplay(5, 6)
 
 def polyfitLeftSPectra():
     DRS_LOFF, DRS_LGPI, DRS_LSTN, DRS_ROFF, DRS_RGPI, DRS_RSTN = _getShavData()
@@ -383,13 +395,42 @@ def tsne():
     for i in [5, 10, 15, 20, 25, 30, 40, 50]:
         DRS_LSTN.tsne(n_components=2, perplexity=i)
 
+def hemoTeo(path):
+    x = []
+    y1 = []
+    y2 = []
+
+    with open(path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip header row
+
+        for row in reader:
+            row = row[0].split()
+            if float(row[0]) > 450 and float(row[0]) < 730:
+                x.append(float(row[0]))
+                y1.append(float(row[1]))
+                y2.append(float(row[2]))
+        # max_Oxy = np.max()
+
+    plt.plot(x, y1, label='Oxyhémoglobine')
+    plt.plot(x, y2, label='Hémoglobine')
+
+    plt.xlabel('Axe des x')
+    plt.ylabel('Valeurs')
+    plt.title('Données du fichier CSV')
+
+    plt.legend()
+    # plt.savefig('/Users/antoinerousseau/Desktop/hemoglobine.eps')
+    plt.show()
+
 
 # AllRawTracks()
-# normalizedLeftSpectra()
+normalizedLeftSpectra()
 # polyfitLeftSPectra()
 # RightSideTreatement()
 # RightSideNormalized()
 # LDA()
 # ABS()
-Umap()
+# Umap()
 # tsne()
+# hemoTeo('/Users/antoinerousseau/Downloads/data_prahl.csv')

@@ -8,8 +8,8 @@ import os
 
 # A NEW ERA HAS BEGUN!!!!!!!!!!!!!!!!!!!!!!!
 
-bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/backgrounds/10min_0light/').spectraSum()
-nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectraSum()
+# bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220223/backgrounds/10min_0light/').spectraSum()
+# nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectraSum()
 
 
 # watersum = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220223/eau_30sec/').spectraSum()
@@ -60,14 +60,14 @@ nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectr
 
 # Photon count data
 
-# iso100full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso/').spectra()
+# iso100full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220413/100ms_iso/').spectraSum()
 # iso300full = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/300ms_iso/').spectra()
 # iso100half = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220413/100ms_iso_halfpower/').spectra()
 
-# iso300full.removeThermalNoise(bg)
+# iso100full.removeThermalNoise(bg)
 # iso100full.cut(100, None)
-# iso300full.getSTD()
-
+# iso100full.getRatioPhotonPerCount()
+# iso100full.display()
 
 # Erika data
 # path = '/Users/antoinerousseau/Desktop/20220314/'
@@ -604,25 +604,25 @@ nbg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220802/bg/').spectr
 
 # get alex and me's DRS data
 
-GREY = []
-WHITE = []
-blood = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/blood/', fileType='USB2000').spectra()
-blood_ref = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/ref/', fileType='USB2000').spectraSum()
-for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/grey/'):
-    if dir[0] == '.':
-        continue
-    GREY.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/grey/' + dir + '/', fileType='USB2000').spectra())
-for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/white/'):
-    if dir[0] == '.':
-        continue
-    WHITE.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/white/' + dir + '/', fileType='USB2000').spectra())
-
-GREY = spectrum.Spectra(GREY)
-GREY.changeLabel('GREY')
-GREY.addAnnotation('GREY')
-WHITE = spectrum.Spectra(WHITE)
-WHITE.changeLabel('WHITE')
-WHITE.addAnnotation('WHITE')
+# GREY = []
+# WHITE = []
+# blood = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/blood/', fileType='USB2000').spectra()
+# blood_ref = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/ref/', fileType='USB2000').spectraSum()
+# for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/grey/'):
+#     if dir[0] == '.':
+#         continue
+#     GREY.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/grey/' + dir + '/', fileType='USB2000').spectra())
+# for dir in os.listdir('/Users/antoinerousseau/Downloads/DRS_006/white/'):
+#     if dir[0] == '.':
+#         continue
+#     WHITE.append(spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/white/' + dir + '/', fileType='USB2000').spectra())
+#
+# GREY = spectrum.Spectra(GREY)
+# GREY.changeLabel('GREY')
+# GREY.addAnnotation('GREY')
+# WHITE = spectrum.Spectra(WHITE)
+# WHITE.changeLabel('WHITE')
+# WHITE.addAnnotation('WHITE')
 
 # data = GREY
 # data.add(WHITE)
@@ -770,4 +770,658 @@ def NaClDataDisplayAndPCA():
 
 
 # NaClDataDisplayAndPCA()
-RamanBrainGrayWhite()
+# RamanBrainGrayWhite()
+
+# methanol = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220830/ethanol/').spectraSum()
+# methanol.display()
+
+
+
+def figure_seminaire():
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20211001/data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20211001/data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.displayMeanSTD()
+
+def ashVSobj():
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20220921/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20220921/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.displayMeanSTD()
+
+def l4():
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20211119/toplot/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20211119/toplot/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.displayMeanSTD()
+
+
+def ldatest():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/bg/').spectraSum()
+    iso = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/iso_verif/').spectra()
+    water = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220913/water/').spectra()
+    dopamine = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/dopamine500/').spectra()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20220830/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20220830/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.add(iso, water, dopamine)
+    data.removeThermalNoise(bg)
+    data.normalizeIntegration()
+    # data = data.combineSpectra(add=5)
+    data.smooth(n=5)
+    # data.ORPL(min_bubble_widths=60, display=True)
+    data.cut(800, 1300, WN=True)
+    data.displayMeanSTD(WN=True)
+    data.lda(display=True)
+    data.ldaScatterPlot(LDx=1)
+    # data.ldaScatterPlot(LDx=3)
+
+
+def monomere():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.combineSpectra(add=5)
+    data.butterworthFilter(cutoff_frequency=8, order=3)
+    data.cut(400, 1900, WN=True)
+    data.displayMeanSTD()
+    data.pca()
+
+    # data.pcaScatterPlot(1, 2)
+    # data.pcaScatterPlot(3, 4)
+    # data.pcaScatterPlot(5, 6)
+    data.pcaDisplay(1, 2)
+    # data.pcaDisplay(3, 4)
+    # data.pcaDisplay(5, 6)
+
+
+def monomereVis():
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    mono = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/data/monomeres/').spectraSum()
+    pbs1 = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/data/pbs_quartz_2/').spectraSum()
+    pbs2 = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/data/pbs_quartz_3/').spectraSum()
+
+    pbs = pbs1.addSpectra(pbs2)
+
+    mono.smooth(n=5)
+    pbs1.smooth(n=5)
+    pbs2.smooth(n=5)
+
+    # mono.butterworthFilter()
+    # pbs1.butterworthFilter()
+    # pbs2.butterworthFilter()
+
+    # mono.normalizeIntegration()
+    # pbs1.normalizeIntegration()
+    # pbs2.normalizeIntegration()
+
+
+    # mono.removeThermalNoise(dn)
+    # pbs1.removeThermalNoise(dn)
+    # pbs2.removeThermalNoise(dn)
+
+
+    mono.subtract(pbs1)
+    mono.cut(400, 1900, WN=True)
+
+    mono.display()
+
+
+def monoVSfib():
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    pbs = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/alpha_syn/pbs/').spectra()
+    monomere = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/alpha_syn/monomeres/').spectra()
+    fibril = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/alpha_syn/fibril/').spectra()
+
+
+    fibril = fibril.combineSpectra(add=10)
+    pbs.add(monomere, fibril)
+    pbs.removeThermalNoise(dn)
+    pbs.butterworthFilter(cutoff_frequency=8, order=3)
+    pbs.cut(400, 1900, WN=True)
+    pbs.displayMeanSTD()
+
+    pbs.pca()
+
+    # pbs.pcaScatterPlot(1, 2)
+    # pbs.pcaScatterPlot(3, 4)
+    # pbs.pcaScatterPlot(5, 6)
+
+    pbs.pcaDisplay(1, 2)
+    pbs.pcaDisplay(3, 4)
+    pbs.pcaDisplay(5, 6)
+
+
+
+
+
+
+def fibril():
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20230323/fibrilPM/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20230323/fibrilPM/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(dn)
+    data.shortenLabels()
+    # data.removeLabel(label='pbs')
+
+    data.picRatio(l1=900, l2=1400)
+    data.picRatio(l1=2850, l2=2900)
+    data.PRScatterPlot(1, 2)
+
+def compareSum():
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    pbs = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/alpha_syn/pbs/').spectraSum()
+    mono = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/alpha_syn/monomeres/').spectraSum()
+
+    # data = pbs.addSpectra(mono)
+    # data.removeThermalNoise(dn)
+    # data.cut(400, 3000, WN=True)
+    # data.normalizeIntegration()
+    #
+    # data.display()
+    mono.removeThermalNoise(dn)
+    pbs.removeThermalNoise(dn)
+    mono.cut(400, 3000, WN=True)
+    pbs.cut(400, 3000, WN=True)
+    mono.normalizeIntegration()
+    pbs.normalizeIntegration()
+    mono.subtract(pbs)
+    mono.display()
+
+# figure_seminaire()
+# ashVSobj()
+# l4()
+
+
+ldatest()
+# monomere()
+# monomereVis()
+# monoVSfib()
+# fibril()
+# compareSum()
+
+def test():
+    dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/dopamine500/').spectraSum()
+    GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/GABA60s/GABA500/').spectraSum()
+    glut = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/glut60s/glut50/').spectraSum()
+
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221124/darkPM/').spectraSum()
+    data = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/dopamine250/').spectra()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+
+    GABA_data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/GABA60s/'):
+        if dir[0] == '.':
+            continue
+        GABA_data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/GABA60s/' + dir + '/').spectra())
+    GABA_data = spectrum.Spectra(GABA_data)
+
+    glut_data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/glut60s/'):
+        if dir[0] == '.':
+            continue
+        glut_data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/glut60s/' + dir + '/').spectra())
+    glut_data = spectrum.Spectra(glut_data)
+
+    data.add(GABA_data, glut_data)
+    data.removeThermalNoise(dn)
+    data.smooth(n=5)
+    data.ORPL(min_bubble_widths=70)
+
+    dopamine.removeThermalNoise(dn)
+    dopamine.smooth(n=5)
+    dopamine.ORPL(min_bubble_widths=70, display=False)
+    dopamine.cut(350, 1800, WN=True)
+    dopamine.normalizeIntegration()
+    GABA.removeThermalNoise(dn)
+    GABA.smooth(n=5)
+    GABA.ORPL(min_bubble_widths=70)
+    GABA.cut(350, 1800, WN=True)
+    GABA.normalizeIntegration()
+    glut.removeThermalNoise(dn)
+    glut.smooth(n=5)
+    glut.ORPL(min_bubble_widths=70)
+    glut.cut(350, 1800, WN=True)
+    # glut.factor(10)
+    glut.normalizeIntegration()
+    #
+    dude = dopamine.addSpectra(GABA)
+    dude.add(glut)
+    dude.display()
+
+    data.cut(350, 1800, WN=True)
+    data.PCAExternalComposit(composit=[dopamine.counts, GABA.counts, glut.counts], labels=['Dopamine', 'GABA', 'glut'])
+    # data.PCAExternalComposit(composit=[glut.counts], labels=['glut'])
+    data.pcaecScatterPlot('Dopamine')
+    data.pcaecScatterPlot('GABA')
+    data.pcaecScatterPlot('glut')
+    # data.displayMeanSTD()
+    # data.pca()
+    # data.pcaDisplay(1, 2)
+    data.PCAEC_KNNIndividualLabel()
+
+
+def hanu():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/dopamine500/').spectraSum()
+    GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/GABA60s/GABA500/').spectraSum()
+    glut = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/glut60s/glut50/').spectraSum()
+
+    dn = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221124/darkPM/').spectraSum()
+
+    dopamine.removeThermalNoise(dn)
+    dopamine.cut(2810, 3024, WN=True)
+    # dopamine.ORPL(min_bubble_widths=40, display=True)
+    # dopamine.cut(350, 1800, WN=True)
+    # dopamine.smooth(n=5)
+    dopamine.smooth(n=3)
+    dopamine.normalizeIntegration()
+    GABA.removeThermalNoise(dn)
+    # GABA.ORPL(min_bubble_widths=100)
+    # GABA.cut(350, 1800, WN=True)
+    # GABA.smooth(n=5)
+    GABA.cut(2810, 3024, WN=True)
+    GABA.smooth(n=3)
+    GABA.normalizeIntegration()
+    glut.removeThermalNoise(dn)
+    # glut.ORPL(min_bubble_widths=100)
+    # glut.cut(350, 1800, WN=True)
+    # glut.smooth(n=5)
+    glut.cut(2810, 3024, WN=True)
+    glut.smooth(n=3)
+    # glut.factor(10)
+    glut.normalizeIntegration()
+
+    # dude = dopamine.addSpectra(GABA)
+    # dude.add(glut)
+    # dude.display()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/Walter/all_hanu_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/Walter/all_hanu_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.smooth(n=5)
+
+    # data.butterworthFilter(cutoff_frequency=5, order=4)
+    data.ORPL(min_bubble_widths=20)
+    data.cut(350, 1800, WN=True)
+    # data.shortenLabels()
+    # data.displayMeanSTD()
+    # data.umap(n_components=2)
+    # data.UMAP_KNNIndividualLabel()
+    data.pca(nbOfComp=3)
+    data.PCA_KNNIndividualLabel()
+    # data.tsne()
+    # data.pca(nbOfComp=20)
+    # data.pcaDisplay(1, 2)
+    # data.pcaDisplay(3, 4)
+    # data.pcaDisplay(5, 6)
+    # data.pcaDisplay(7, 8)
+    # data.pcaDisplay(15, 20)
+    # data.pcaScatterPlot(1, 2)
+    # data.pcaScatterPlot(3, 4)
+    # data.pcaScatterPlot(5, 6)
+    # data.pcaScatterPlot(7, 8)
+    # data.pcaScatterPlot(9, 10)
+    # data.pcaScatterPlot(11, 12)
+    # data.pcaScatterPlot(13, 14)
+    # data.pcaScatterPlot(15, 16)
+    # data.pcaScatterPlot(17, 18)
+
+
+    # data.PCA_KNNIndividualLabel(n_comp=10)
+
+
+    # data.ORPL(min_bubble_widths=40)
+    # data.cut(400, 1800, WN=True)
+    # data.CRRemoval()
+    # data.smooth(n=5)
+    # data.shortenLabels()
+    # data.displayMeanSTD()
+
+    # data.picRatio(l1=869, l2=488)
+    # data.picRatio(l1=688, l2=740)
+    # data.picRatio(l1=984, l2=488)
+    # data.picRatio(l1=1087, l2=1044)
+    # data.picRatio(l1=1087, l2=488)
+    # data.picRatio(l1=1288, l2=1274)
+    # data.picRatio(l1=1283, l2=488)
+    # data.picRatio(l1=1438, l2=488)
+    # data.picRatio()
+    # data.PRScatterPlot(1, 2)
+    # data.PRScatterPlot(3, 4)
+    # data.PRScatterPlot(5, 6)
+    # data.PRScatterPlot(7, 8)
+
+    # data.PR_KNNIndividualLabel()
+
+
+    # data.pca()
+    # data.PCA_KNNIndividualLabel()
+
+    # data.PCAExternalComposit(composit=[dopamine.counts, GABA.counts, glut.counts], labels=['Dopamine', 'GABA', 'glut'])
+    # data.pcaecScatterPlot('Dopamine', shorten_labels=True)
+    # data.pcaecScatterPlot('glut', shorten_labels=True)
+    # data.pcaecScatterPlot('GABA', shorten_labels=True)
+    # data.PCAEC_KNNIndividualLabel()
+
+    # data.shortenLabels()
+    # data.displayMeanSTD()
+    # data.pca()
+    # data.prob_classifier()
+    # data.R2_classifier()
+
+    # data.pcaDisplay(1, 2)
+    # data.pcaDisplay(3, 4)
+    # data.pcaDisplay(5, 6)
+    #
+    # data.pcaScatterPlot(1, 2)
+    # data.pcaScatterPlot(3, 4)
+    # data.pcaScatterPlot(5, 6)
+
+def neuro_con():
+    import spectrum
+
+    bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20221124/darkPM/').spectraSum()
+    GABA = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/GABA60s/GABA500/').spectraSum()
+    glut = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/glut60s/glut50/').spectraSum()
+    dopamine = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/dopamine500/').spectraSum()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/neuro_con/dopamine60s/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+
+    GABA.removeThermalNoise(bg)
+    glut.removeThermalNoise(bg)
+    dopamine.removeThermalNoise(bg)
+
+    GABA.cut(2800, 3020, WN=True)
+    glut.cut(2800, 3020, WN=True)
+    dopamine.cut(2800, 3020, WN=True)
+
+    array_2937 = []
+    concentrations = []
+    array_2800 = []
+    array_2870 = []
+    array_2976 = []
+    array_3007 = []
+
+    for spectrum in data.spectra:
+        concentrations.append(float(spectrum.label[8:]))
+    #     array_2800.append(spectrum.counts[900] * 4.8)
+    #     array_2870.append(spectrum.counts[965] * 1.53)
+    #     array_2976.append(spectrum.counts[1016] * 0.9)
+    #     array_3007.append(spectrum.counts[1031] * 0.82)
+    #     array_2937.append(spectrum.counts[996])
+    #
+    # plt.plot(concentrations, array_2800, 'o', label='2800 cm-1')
+    # plt.plot(concentrations, array_2937, 'o', label='2937 cm-1')
+    # plt.plot(concentrations, array_2870, 'o', label='2870 cm-1')
+    # plt.plot(concentrations, array_2976, 'o', label='2976 cm-1')
+    # plt.plot(concentrations, array_3007, 'o', label='3007 cm-1')
+    # plt.legend()
+    # plt.show()
+    dopamine.smooth(n=3)
+    dopamine.display()
+
+
+    data.smooth(n=3)
+    data.cut(2810, 3024, WN=True)
+    data.pca()
+    data._getPCAdf()
+    for i in range(3):
+        plt.plot(concentrations, data.pca_df.to_numpy().T[i], 'o', label='PC {0}'.format(i + 1))
+    plt.legend()
+    plt.show()
+
+    data.pcaDisplay(1, 2, 3)
+
+
+
+
+
+
+
+    # plt.plot(dopamine.counts)
+    # plt.show()
+
+
+    # GABA.normalizeIntegration()
+    # glut.normalizeIntegration()
+    # dopamine.normalizeIntegration()
+    # GABA.ORPL(min_bubble_widths=200, display=False)
+    # glut.ORPL(min_bubble_widths=200, display=False)
+    # dopamine.ORPL(min_bubble_widths=200, display=False)
+
+    # neuro = GABA.addSpectra(glut)
+    # neuro.add(dopamine)
+    # neuro.display()
+    # GABA.display()
+    # glut.display()
+    # dopamine.display()
+
+def PCA_dan():
+    def test40WithSubclassExampleGraphsAndData(self):
+        # Final example with the subclass for cleaner code
+
+        basisSet_bj = self.createBasisSet(self.X, N=5, maxPeaks=5, maxAmplitude=1, maxWidth=30, minWidth=5)
+        plt.plot(basisSet_bj.T)
+        plt.legend()
+        plt.show()
+        dataSet_ij, concentration_ik = self.createDatasetFromBasisSet(100, basisSet_bj)
+        # dataSet_ij is now a simulated dataset of 100 spectra coming from 5 analytes mixed in various concentrations
+        # basisSet_bj is their individual spectra
+
+        pca = LabPCA(n_components=5)
+        pca.fit(dataSet_ij)
+
+        # Look at non-centered components
+        plt.plot(pca.components_noncentered_.T)
+        plt.title("Principal components (non-centered)")
+        plt.show()
+
+        # To avoid confusion, indices (i,b,j,k,p) represent:
+        # i = sample #
+        # b = basis #
+        # j = feature #
+        # k = concentration #
+        # p = principal coefficient #
+        b_bp = pca.transform_noncentered(np.array([basisSet_bj[0]]))
+        s_ip = pca.transform_noncentered(dataSet_ij)
+        s_pi = s_ip.T
+        invb_pb = np.linalg.pinv(b_bp)
+        invb_bp = invb_pb.T
+
+        recoveredConcentrations_ki = (invb_bp@s_pi).T
+        expectedConcentrations_ki = concentration_ik.T
+        print("Expected concentrations (first four only):\n", expectedConcentrations_ki[0:3])
+        print("Recovered concentrations (first four only):\n", recoveredConcentrations_ki[0:3])
+
+        everythingBelowThreshold = ((expectedConcentrations_ki-recoveredConcentrations_ki) ).all() < 1e-2
+        self.assertTrue(everythingBelowThreshold )
+        print("Minimal differences: ", everythingBelowThreshold)
+
+
+
+def testeroni():
+    bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20221124/darkPM/').spectraSum()
+    # bg.display(WN=False)
+    # plt.plot(bg.counts)
+    # plt.show()
+
+
+    caudate_WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/caudate_WM_l/').spectra()
+    caudate_WM.removeThermalNoise(bg)
+    caudate_WM.cut(None, -4)
+    caudate_WM.ORPL(min_bubble_widths=150, display=False)
+    # caudate_WM.display()
+    putamen_WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/Putamen_WM_l/').spectra()
+    putamen_WM.removeThermalNoise(bg)
+    putamen_WM.cut(None, -4)
+    putamen_WM.ORPL(min_bubble_widths=150, display=False)
+    STN_SN = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/STN_SN_l/').spectra()
+    STN_SN.removeThermalNoise(bg)
+    # STN_SN.smooth(n=3)
+    STN_SN.cut(None, -4)
+    # STN_SN.ORPL(min_bubble_widths=40, display=False)
+
+    STN_SN.display()
+
+
+
+    # caudate_WM.tile(x=6, y=6, WN_to_display=2848)
+    # putamen_WM.tile(x=6, y=6, WN_to_display=2848)
+    # STN_SN.tile(x=16, y=6, WN_to_display=1434)
+    # STN_SN.tile(x=16, y=6, WN_to_display=1360)
+    # STN_SN.tile(x=16, y=6, WN_to_display=2847)
+    # STN_SN.tile(x=16, y=6, WN_to_display=2880)
+    # STN_SN.tile(x=16, y=6, WN_to_display=2933)
+
+
+
+# neuro_con()
+# hanu()
+# test()
+# PCA_dan()
+# testeroni()
+
+
+
+
+import os
+import json
+
+
+def txt_to_json(folder_path, output_file):
+
+    # Iterate over files in the folder
+    n = 0
+    for filename in os.listdir(folder_path):
+        n += 1
+        current_y_values = []
+        if filename.endswith(".txt"):
+            file_path = os.path.join(folder_path, filename)
+
+            # Read the contents of the text file
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
+
+            # Remove metadata (assuming it is present in the first few lines)
+            lines = lines[14:]  # Adjust this line based on the number of metadata lines
+
+            # Extract y values from each line and append to the y_values list
+            n_lines = 0
+            background = []
+            for line in lines:
+                n_lines += 1
+                background.append(1)
+
+                values = line.strip().split()
+                if len(values) >= 2:
+                    y = float(values[1])
+                    current_y_values.append(round(y))
+
+            # Create the dictionary
+            thisdict = {
+                "TimeStamp": "2023/6/7-11h10 52.329",
+                "Comment": "Dinde",
+                "Wavelength": 785,
+                "Power": 50,
+                "ExpTime": 30,
+                "SpecPerAcqui": 1,
+                "CamTemp": 0,
+                "CamStab": "STABILIZED",
+                "Background": background,
+                "RawSpectra": current_y_values
+            }
+
+            # Save y_values as JSON
+            with open('/Users/antoinerousseau/Downloads/test/test{0}.json'.format(n), 'w') as json_file:
+                json.dump(thisdict, json_file)
+
+
+
+# Usage example
+folder_path = '/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/Thalamus6_1'  # Replace with the actual folder path
+output_file = '/Users/antoinerousseau/Downloads/test/test.json'  # Replace with the desired output file path
+
+# txt_to_json(folder_path, output_file)
+
+
+

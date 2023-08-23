@@ -7,20 +7,25 @@ import os
 from dcclab.database import *
 import random
 import gym
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+import io
 
 
-env = gym.make("LunarLander-v2", render_mode="human")
-env.action_space.seed(42)
 
-observation, info = env.reset(seed=42)
-
-for _ in range(1000):
-    observation, reward, terminated, truncated, info = env.step(env.action_space.sample())
-
-    if terminated or truncated:
-        observation, info = env.reset()
-
-env.close()
+#
+# env = gym.make("LunarLander-v2", render_mode="human")
+# env.action_space.seed(42)
+#
+# observation, info = env.reset(seed=42)
+#
+# for _ in range(1000):
+#     observation, reward, terminated, truncated, info = env.step(env.action_space.sample())
+#
+#     if terminated or truncated:
+#         observation, info = env.reset()
+#
+# env.close()
 
 
 def BarCode(Section, length, TW, TM, TG):
@@ -528,6 +533,289 @@ def ElaheData():
     # data.pcaDisplay(1, 2, 3)
 
 
+def testALSbrain():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.CRRemoval()
+
+    lam_vals = [0.001, 0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000]
+    p_vals = [0.00001, 0.0001]
+    # lam_acc
+    for i in lam_vals:
+        for j in p_vals:
+            print('lam = {0}, p = {1}'.format(i, j))
+            rand_spec_index = random.randint(0, len(data.spectra) - 1)
+            data.spectra[rand_spec_index].ALS(lam=i, p=j, display=True)
+            data.spectra[rand_spec_index].display()
+
+
+def testBWbrain():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.CRRemoval()
+
+    cutoff = [1, 3, 5, 7, 10, 15, 20]
+    order = [1, 2, 3, 4, 5, 6]
+    # lam_acc
+    for i in cutoff:
+        for j in order:
+            print('cutoff = {0}, order = {1}'.format(i, j))
+            rand_spec_index = random.randint(0, len(data.spectra) - 1)
+            data.spectra[rand_spec_index].butterworthFilter(cutoff_frequency=i, order=j, display=True)
+            data.spectra[rand_spec_index].display()
+
+def testsavgolbrain():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.CRRemoval()
+
+    window = [10, 14, 20, 30]
+    order = [4, 5, 6]
+    # lam_acc
+
+    for i in window:
+        for j in order:
+            print('Window size = {0} , Order = {1}'.format(i, j))
+            rand_spec_index = random.randint(0, len(data.spectra) - 1)
+
+            data.spectra[rand_spec_index].savgolFilter(window_length=i, order=j)
+            data.spectra[rand_spec_index].display()
+
+def testORPLbrain():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.CRRemoval()
+
+    MBW = [5, 10, 20, 40, 75, 100, 150, 200, 300]
+    # lam_acc
+    for i in MBW:
+        print('Min bubble width = {0}'.format(i))
+        rand_spec_index = random.randint(0, len(data.spectra) - 1)
+        data.spectra[rand_spec_index].ORPL(min_bubble_widths=i, display=True)
+        data.spectra[rand_spec_index].display()
+
+def testheatmap():
+    lam_vals = [1, 10, 100, 1000, 10000, 100000, 1000000]
+    p_vals = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+    data = []
+    print(data)
+    row = -1
+    sim_data = 0
+    for i in lam_vals:
+        row += 1
+        row_data = []
+        for j in p_vals:
+            row_data.append(sim_data)
+            sim_data += 1
+        data.append(row_data)
+    print(data)
+    sns.heatmap(data, yticklabels=lam_vals, xticklabels=p_vals, annot=True)
+    plt.xlabel('p')
+    plt.ylabel('lam')
+    plt.show()
+
+def test_R2_class():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.CRRemoval()
+    data.R2_classifier()
+
+
+def test_plt_cancel():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [1, 2, 3, 4, 5, 6]
+    plt.plot(x, y)
+    plt.show()
+    print('first test done')
+
+    plt.clf()
+    x = [0, 1, 2, 3, 4, 5]
+    y = [1, 2, 3, 4, 5, 6]
+    plt.plot(x, y)
+    plt.show()
+    print('second test done')
+
+def test_KNN_returns():
+    # bg = spectrum.Acquisition(
+    #     '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+    #
+    # data = []
+    # for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/'):
+    #     if dir[0] == '.':
+    #         continue
+    #     data.append(
+    #         spectrum.Acquisition(
+    #             '/Users/antoinerousseau/Desktop/maitrise/DATA/test_data/' + dir + '/').spectra())
+    # data = spectrum.Spectra(data)
+    # data.cut(350, 1800, WN=True)
+    # data.pca()
+    # print(data.PCA_KNNIndividualLabel(return_details=True))
+
+    cmn = [[30, 30, 5, 0, 30, 5], [0, 55, 30, 15, 2, 2], [1, 2, 3, 4, 5, 6], [6, 4, 9, 6, 78, 5], [1, 54, 2, 23, 457, 45], [1, 1, 1, 1, 1, 1]]
+    label_str = [1, 2, 3, 4, 5, 6]
+    accuracy_per_label = []
+    max_val_list = []
+    max_str_list = []
+    for i in range(len(label_str)):
+        current_list = list(cmn[i])
+        accuracy_per_label.append(current_list[i])
+
+        max_index = current_list.index(max(current_list))
+        if max_index == i:
+            current_list[i] = 0
+            max_index = current_list.index(max(current_list))
+
+        max_val = current_list[max_index]
+        max_str = label_str[max_index]
+        max_val_list.append(max_val)
+        max_str_list.append(max_str)
+    print(cmn)
+    print(label_str)
+    print(max_val_list)
+    print(max_str_list)
+
+# test_KNN_returns()
+# testALSbrain()
+# test_R2_class()
+# test_plt_cancel()
+
+
+def test_Memoire_array():
+    anal_data = pd.read_csv('Memoire_df.csv')
+    anal_data = anal_data.rename(columns={"Total Accuracy": "TotAcc", "Accuracy per label": "Accuracy_per_label", "Max val list": "Max_val_list", "Max str list": "Max_str_list", "Label str": "Label_str"})
+
+    params = []
+    totacc = []
+    accperlab = []
+    maxval = []
+    maxstr = []
+    labelstr = []
+    matrice = []
+
+    # Get params as a list
+    for param in anal_data["Params"]:
+        param = param.replace("['", "")
+        param = param.replace("']", "")
+        param_as_list = param.split("', '")
+        params.append(param_as_list)
+    anal_data.Params = params
+
+    # Get tot acc as a float
+    for acc in anal_data["TotAcc"]:
+        totacc.append(float(acc))
+    anal_data.TotAcc = totacc
+
+    # Get Accuracy per label as list of floats
+    for acc in anal_data["Accuracy_per_label"]:
+        acc = acc.replace('[', '')
+        acc = acc.replace(']', '')
+        acc = acc.split(', ')
+        for i in range(len(acc)):
+            acc[i] = float(acc[i])
+        accperlab.append(acc)
+    anal_data.Accuracy_per_label = accperlab
+
+    # Get Max val as list of floats
+    for acc in anal_data["Max_val_list"]:
+        acc = acc.replace('[', '')
+        acc = acc.replace(']', '')
+        acc = acc.split(', ')
+        for i in range(len(acc)):
+            acc[i] = float(acc[i])
+        maxval.append(acc)
+    anal_data.Max_val_list = maxval
+
+
+    # Get Max str as list
+    for label in anal_data["Max_str_list"]:
+        label = label.replace("['", "")
+        label = label.replace("']", "")
+        label = label.split("', '")
+        maxstr.append(label)
+    anal_data.Max_str_list = maxstr
+
+
+    # Get label_str as list
+    for label in anal_data["Label_str"]:
+        label = label.replace("['", "")
+        label = label.replace("']", "")
+        label = label.split("', '")
+        labelstr.append(label)
+    anal_data.Label_str = labelstr
+
+
+    # Get matrice as 2d array
+    for mat in anal_data["Matrice"]:
+        real_mat = []
+        mat = mat.replace('[', '')
+        mat = mat.replace(']', '')
+        mat = mat.split('\n')
+        for row in mat:
+            data = row.split(' ')
+            real_row = []
+
+            for i in range(len(data)):
+                if data[i] != '':
+                    real_row.append(int(data[i]))
+            real_mat.append(real_row)
+        matrice.append(real_mat)
+
+
+# TODO:test all the previous stuff
+
+
+
+test_Memoire_array()
 
 # shavDataRaw()
 # PCADeapoliLiveMonkeyDataSTNl()
