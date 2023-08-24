@@ -150,8 +150,9 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
                                                                        'Label_str': [HWN_label_str],
                                                                        'Matrice':[HWN_mat]}))
 
-                                    main = main.append([FP_df, NR_df, HWN_df])
-
+                                    current_df = pd.concat([FP_df, NR_df, HWN_df], ignore_index=True)
+                                    main = pd.concat([main, current_df], ignore_index=True)
+                                    # print(main)
                                     # print(FP_df)
                                     # print(NR_df)
                                     # print(HWN_df)
