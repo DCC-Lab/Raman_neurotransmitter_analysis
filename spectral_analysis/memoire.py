@@ -190,12 +190,12 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
         'dn/').spectraSum()
 
     data = []
-    for dir in os.listdir('test_data/'):
+    for dir in os.listdir('brain_data/'):
         if dir[0] == '.':
             continue
         data.append(
             spectrum.Acquisition(
-                'test_data/' + dir + '/').spectra())
+                'brain_data/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
     data.CRRemoval()
