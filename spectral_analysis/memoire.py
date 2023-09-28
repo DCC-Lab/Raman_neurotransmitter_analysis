@@ -286,13 +286,13 @@ def iterate_trough_permutations():
 
         for f in filter:
             if f == 0:
-                f_array = [[0.1, 1, 10, 100, 1000, 10000, 100000, 1000000], [0.00001, 0.0001, 0.001, 0.01, 0.1]]
+                f_array = [[0.1, 1, 10, 100, 1000], [0.00001, 0.0001]]
                 # f_array = [[10], [0.001]]
             if f == 1:
-                f_array = [[5, 7, 10, 15, 20], [3]]
+                f_array = [[5, 7, 10, 20], [3]]
                 # f_array = [[10], [3]]
             if f == 2:
-                f_array = [10, 20, 40, 75, 100, 150, 200]
+                f_array = [10, 25, 50, 100, 150, 200]
                 # f_array = [40]
 
             for d in DR:
@@ -308,7 +308,7 @@ def iterate_trough_permutations():
                 # if d == 3:
                     # TODO pcaec
                 if d == 4:
-                    d_array = [1, 2, 3, 4, 5, 7, 10, 15]
+                    d_array = [1, 2, 3, 5, 7, 10, 15]
                     # d_array = [5]
 
 
