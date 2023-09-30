@@ -278,10 +278,10 @@ def iterate_trough_permutations():
 
     for p in pre:
         if p == 0:
-            p_array = [3, 5, 7, 9, 11]
+            p_array = [3, 7, 11]
             # p_array = [5]
         if p == 1:
-            p_array = [[5, 7, 9, 11, 15, 21], [2, 3]]
+            p_array = [[5, 10, 20], [2, 3]]
             # p_array = [[9], [3]]
 
         for f in filter:
@@ -289,18 +289,18 @@ def iterate_trough_permutations():
                 f_array = [[0.1, 1, 10, 100, 1000], [0.00001, 0.0001]]
                 # f_array = [[10], [0.001]]
             if f == 1:
-                f_array = [[5, 7, 10, 20], [3]]
+                f_array = [[5, 10, 20], [3]]
                 # f_array = [[10], [3]]
             if f == 2:
-                f_array = [10, 25, 50, 100, 150, 200]
+                f_array = [20, 50, 100, 200]
                 # f_array = [40]
 
             for d in DR:
                 if d == 0:
-                    d_array = [1, 2, 3, 4, 5, 7, 10, 15]
+                    d_array = [1, 2, 3, 5, 10]
                     # d_array = [5]
                 if d == 1:
-                    d_array = [[2, 4, 7, 10], [5, 10, 15, 25, 40, 75], [0.05, 0.1, 0.5]]
+                    d_array = [[2, 5], [5, 10, 30], [0.05, 0.5]]
                     # d_array = [[4], [15], [0.5]]
 
                 # if d == 2:
@@ -308,13 +308,13 @@ def iterate_trough_permutations():
                 # if d == 3:
                     # TODO pcaec
                 if d == 4:
-                    d_array = [1, 2, 3, 5, 7, 10, 15]
+                    d_array = [1, 2, 3, 5, 10]
                     # d_array = [5]
 
 
                 for c in cluster:
                     if c == 0:
-                        c_array = [3, 5, 8, 12, 20, 30]
+                        c_array = [5, 10, 30]
                         # c_array = [8]
                     if c == 1:
                         c_array = [1]
