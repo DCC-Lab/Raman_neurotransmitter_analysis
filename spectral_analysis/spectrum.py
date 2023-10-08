@@ -564,6 +564,7 @@ class Spectrum:
         self.counts = self.counts - mean
 
     def display(self, WN=True, NoX=False, xlabel='Wavelenght [nm]', ylabel='Counts [-]'):
+        plt.clf()
         # snrString = ', SNR= '+str(self.getSNR()[0])[:6] + ', peak = '+str(self.getSNR()[1])[:7] + ', IT: {0} s'.format(self.integrationTime)
         snrString = "todo"
         if WN == True and NoX == False:
@@ -3159,6 +3160,7 @@ class Spectra:
 
         # To overwrite the labels:
         # label_str = ['GPe', 'GPi', 'SN', 'STN', 'Putamen', 'Thalamus']
+        plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
         cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
@@ -3322,6 +3324,7 @@ class Spectra:
 
         # To overwrite the labels:
         # label_str = ['GPe', 'GPi', 'SN', 'STN', 'Putamen', 'Thalamus']
+        plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
         cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])

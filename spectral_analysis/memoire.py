@@ -11,6 +11,10 @@ main = pd.DataFrame({'Params':[],
                      'Max str list':[],
                      'Label str':[]})
 
+#get the dark noise one time so it doesnt compute is everytime
+bg = spectrum.Acquisition(
+    'dn/').spectraSum()
+
 def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, normalize=False):
     global main
     # FDRC_array[0]:
@@ -186,8 +190,6 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
     # 0 : KNN --> cluster_array : 1d
     # 1 : R2 --> cluster_array : None
     # 2 : Prob --> cluster_array : None
-    bg = spectrum.Acquisition(
-        'dn/').spectraSum()
 
     data = []
     for dir in os.listdir('brain_data/'):
