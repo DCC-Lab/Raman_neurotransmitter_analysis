@@ -28,12 +28,10 @@ from sklearn.metrics import confusion_matrix
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 import seaborn as sns
-import plotly.io as pio
 import random
 import scipy.stats as stats
 import ORPL
 import LabPCA
-# import warnings filter
 from warnings import simplefilter
 # ignore all future warnings
 simplefilter(action='ignore', category=FutureWarning)

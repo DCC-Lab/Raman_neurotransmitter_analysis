@@ -3,8 +3,9 @@ import spectrum
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import multiprocessing
 
-main = pd.DataFrame({'Params':[],
+main_df = pd.DataFrame({'Params':[],
                      'Total Accuracy':[],
                      'Accuracy per label':[],
                      'Max val list':[],
@@ -16,7 +17,7 @@ bg = spectrum.Acquisition(
     'dn/').spectraSum()
 
 def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, normalize=False):
-    global main
+    global main_df
     # FDRC_array[0]:
     # 0 : smooth --> pre_array : 1d array
     # 1 : savgol --> pre_array : 2d array
@@ -95,6 +96,8 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
         Cluster = 'Prob classifier()'
         C1 = cluster_array
 
+    all_parameters = []
+
     for p_1 in p1:
         for p_2 in p2:
 
@@ -106,67 +109,119 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
                             for DR_3 in DR3:
 
                                 for C_1 in C1:
-                                    # tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str
-                                    FP_tot_accuracy, FP_accuracy_per_label, FP_max_val_list, FP_max_str_list, FP_label_str, FP_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 1, normalize=normalize)
-                                    NR_tot_accuracy, NR_accuracy_per_label, NR_max_val_list, NR_max_str_list, NR_label_str, NR_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 2, normalize=normalize)
-                                    HWN_tot_accuracy, HWN_accuracy_per_label, HWN_max_val_list, HWN_max_str_list, HWN_label_str, HWN_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 3, normalize=normalize)
+# -------------------------------------------------
+                                    for WN_region in [1, 2, 3]:
+                                        parameters = (
+                                        FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], WN_region, normalize)
+                                        all_parameters.append(parameters)
+                                    # parameters = (
+                                    # FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 2, normalize)
+                                    # all_parameters.append(parameters)
+                                    # parameters = (
+                                    # FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 3, normalize)
+                                    # all_parameters.append(parameters)
 
-                                    # exemple de param [smooth(5), ALS(1000, 0.1), PCA(10), KNN(8)]
-                                    if normalize == True:
-                                        norm = 'Normalized'
-                                    if normalize == False:
-                                        norm = 'Not Normalized'
-                                    FP_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
-                                                                                  filter.format(f_1, f_2),
-                                                                                  DR.format(DR_1, DR_2, DR_3),
-                                                                                  Cluster.format(C_1),
-                                                                                  norm,
-                                                                                  'FingerPrint']],
-                                                                         'Total_Accuracy':[FP_tot_accuracy],
-                                                                         'Accuracy_per_label':[FP_accuracy_per_label],
-                                                                         'Max_val_list':[FP_max_val_list],
-                                                                         'Max_str_list':[FP_max_str_list],
-                                                                         'Label_str':[FP_label_str],
-                                                                         'Matrice':[FP_mat]}))
+    # print(all_parameters)
+    print(len(all_parameters))
 
-                                    NR_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
-                                                                                  filter.format(f_1, f_2),
-                                                                                  DR.format(DR_1, DR_2, DR_3),
-                                                                                  Cluster.format(C_1),
-                                                                                  norm,
-                                                                                  'No Raman Region']],
-                                                                       'Total_Accuracy': [NR_tot_accuracy],
-                                                                       'Accuracy_per_label': [NR_accuracy_per_label],
-                                                                       'Max_val_list': [NR_max_val_list],
-                                                                       'Max_str_list': [NR_max_str_list],
-                                                                       'Label_str': [NR_label_str],
-                                                                       'Matrice':[NR_mat]}))
 
-                                    HWN_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
-                                                                                  filter.format(f_1, f_2),
-                                                                                  DR.format(DR_1, DR_2, DR_3),
-                                                                                  Cluster.format(C_1), norm,
-                                                                                  'High Wavenumbers']],
-                                                                       'Total_Accuracy': [HWN_tot_accuracy],
-                                                                       'Accuracy_per_label': [HWN_accuracy_per_label],
-                                                                       'Max_val_list': [HWN_max_val_list],
-                                                                       'Max_str_list': [HWN_max_str_list],
-                                                                       'Label_str': [HWN_label_str],
-                                                                       'Matrice':[HWN_mat]}))
+    with multiprocessing.Pool(16) as pool:
+        all_results = pool.starmap(compute_combo, all_parameters[0:4])
 
-                                    current_df = pd.concat([FP_df, NR_df, HWN_df], ignore_index=True)
-                                    main = pd.concat([main, current_df], ignore_index=True)
-                                    # print(main)
-                                    # print(FP_df)
-                                    # print(NR_df)
-                                    # print(HWN_df)
+    for result, parameters in zip(all_results, all_parameters):
+        FP_tot_accuracy, FP_accuracy_per_label, FP_max_val_list, FP_max_str_list, FP_label_str, FP_mat = result
+        FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], WN_region, normalize = parameters
 
-                                    # print('Normalized data == {0}'.format(normalize))
-                                    # print(pre.format(p_1, p_2))
-                                    # print(filter.format(f_1, f_2))
-                                    # print(DR.format(DR_1, DR_2, DR_3))
-                                    # print(Cluster.format(C_1))
-                                    # print('Dead Region Accuracy : {0} , Fingerprint Region Accuracy : {1} , HWN Region Accuracy : {2}'.format(round(NR_tot_accuracy, 4), round(FP_tot_accuracy, 4), round(HWN_tot_accuracy, 4)), '\n')
+        if normalize == True:
+            norm = 'Normalized'
+        if normalize == False:
+            norm = 'Not Normalized'
+
+        if WN_region == 1:
+            spec_region = "FingerPrint"
+        if WN_region == 2:
+            spec_region = "No Raman Region"
+        if WN_region == 3:
+            spec_region = "High Wavenumbers"
+
+        FP_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
+                                                      filter.format(f_1, f_2),
+                                                      DR.format(DR_1, DR_2, DR_3),
+                                                      Cluster.format(C_1),
+                                                      norm,
+                                                      spec_region]],
+                                             'Total_Accuracy':[FP_tot_accuracy],
+                                             'Accuracy_per_label':[FP_accuracy_per_label],
+                                             'Max_val_list':[FP_max_val_list],
+                                             'Max_str_list':[FP_max_str_list],
+                                             'Label_str':[FP_label_str],
+                                             'Matrice':[FP_mat]}))
+
+        main_df = pd.concat([main_df, FP_df], ignore_index=True)
+
+
+# -------------------------------------------------
+#                                     # tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str
+#                                     FP_tot_accuracy, FP_accuracy_per_label, FP_max_val_list, FP_max_str_list, FP_label_str, FP_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 1, normalize=normalize)
+#                                     NR_tot_accuracy, NR_accuracy_per_label, NR_max_val_list, NR_max_str_list, NR_label_str, NR_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 2, normalize=normalize)
+#                                     HWN_tot_accuracy, HWN_accuracy_per_label, HWN_max_val_list, HWN_max_str_list, HWN_label_str, HWN_mat = compute_combo(FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], 3, normalize=normalize)
+#
+#                                     # exemple de param [smooth(5), ALS(1000, 0.1), PCA(10), KNN(8)]
+#                                     if normalize == True:
+#                                         norm = 'Normalized'
+#                                     if normalize == False:
+#                                         norm = 'Not Normalized'
+#                                     FP_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
+#                                                                                   filter.format(f_1, f_2),
+#                                                                                   DR.format(DR_1, DR_2, DR_3),
+#                                                                                   Cluster.format(C_1),
+#                                                                                   norm,
+#                                                                                   'FingerPrint']],
+#                                                                          'Total_Accuracy':[FP_tot_accuracy],
+#                                                                          'Accuracy_per_label':[FP_accuracy_per_label],
+#                                                                          'Max_val_list':[FP_max_val_list],
+#                                                                          'Max_str_list':[FP_max_str_list],
+#                                                                          'Label_str':[FP_label_str],
+#                                                                          'Matrice':[FP_mat]}))
+#
+#                                     NR_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
+#                                                                                   filter.format(f_1, f_2),
+#                                                                                   DR.format(DR_1, DR_2, DR_3),
+#                                                                                   Cluster.format(C_1),
+#                                                                                   norm,
+#                                                                                   'No Raman Region']],
+#                                                                        'Total_Accuracy': [NR_tot_accuracy],
+#                                                                        'Accuracy_per_label': [NR_accuracy_per_label],
+#                                                                        'Max_val_list': [NR_max_val_list],
+#                                                                        'Max_str_list': [NR_max_str_list],
+#                                                                        'Label_str': [NR_label_str],
+#                                                                        'Matrice':[NR_mat]}))
+#
+#                                     HWN_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
+#                                                                                   filter.format(f_1, f_2),
+#                                                                                   DR.format(DR_1, DR_2, DR_3),
+#                                                                                   Cluster.format(C_1), norm,
+#                                                                                   'High Wavenumbers']],
+#                                                                        'Total_Accuracy': [HWN_tot_accuracy],
+#                                                                        'Accuracy_per_label': [HWN_accuracy_per_label],
+#                                                                        'Max_val_list': [HWN_max_val_list],
+#                                                                        'Max_str_list': [HWN_max_str_list],
+#                                                                        'Label_str': [HWN_label_str],
+#                                                                        'Matrice':[HWN_mat]}))
+#
+#                                     current_df = pd.concat([FP_df, NR_df, HWN_df], ignore_index=True)
+#                                     main_df = pd.concat([main_df, current_df], ignore_index=True)
+#                                     # print(main_df)
+#                                     # print(FP_df)
+#                                     # print(NR_df)
+#                                     # print(HWN_df)
+#
+#                                     # print('Normalized data == {0}'.format(normalize))
+#                                     # print(pre.format(p_1, p_2))
+#                                     # print(filter.format(f_1, f_2))
+#                                     # print(DR.format(DR_1, DR_2, DR_3))
+#                                     # print(Cluster.format(C_1))
+#                                     # print('Dead Region Accuracy : {0} , Fingerprint Region Accuracy : {1} , HWN Region Accuracy : {2}'.format(round(NR_tot_accuracy, 4), round(FP_tot_accuracy, 4), round(HWN_tot_accuracy, 4)), '\n')
 
 
 def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=False):
@@ -341,7 +396,9 @@ def iterate_trough_permutations():
                         best_anal([p, f, d, c], pre_array=p_array, filter_array=f_array, DR_array=d_array, cluster_array=c_array, normalize=n)
 
 
-iterate_trough_permutations()
-main.to_csv('Memoire_df.csv', index=False)
+if __name__ == '__main__':
+    iterate_trough_permutations()
+# main.to_csv('Memoire_df.csv   ', index=False)
+main_df.to_csv('test.csv', index=False)
 
 # print(main)

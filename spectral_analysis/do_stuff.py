@@ -182,21 +182,21 @@ import os
 
 #victoria
 
-# path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/6mo/'
-#
-# data = []
-# for dir in os.listdir(path):
-#     if dir[0] == '.':
-#         continue
-#     data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
-#
-# data = spectrum.Spectra(data)
-# # data.display(WN=False)
-#
-# data.pca()
-#
-# data.pcaDisplay(1, 2)
-# data.pcaScatterPlot(1, 2)
+path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/6mo/'
+
+data = []
+for dir in os.listdir(path):
+    if dir[0] == '.':
+        continue
+    data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
+
+data = spectrum.Spectra(data)
+# data.display(WN=False)
+
+data.pca()
+
+data.pcaDisplay(1, 2)
+data.pcaScatterPlot(1, 2)
 
 
 

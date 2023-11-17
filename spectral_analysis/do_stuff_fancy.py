@@ -814,8 +814,34 @@ def test_Memoire_array():
 # TODO:test all the previous stuff
 
 
+def WM_GM_dan():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
 
-test_Memoire_array()
+    WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/WM/').spectra()
+    GM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/GM/').spectra()
+    WM.removeThermalNoise(bg)
+    GM.removeThermalNoise(bg)
+
+    WM = WM.spectra[10]
+    GM = GM.spectra[10]
+
+    WM.cut(400, None, WN=True)
+    GM.cut(400, None, WN=True)
+    # WM.factor(8)
+    # GM.factor(8)
+    # WM.normalizeCounts()
+    # GM.normalizeCounts()
+    data_WM = WM.counts
+    data_GM = GM.counts
+    X = WM.wavenumbers
+    data = WM.addSpectra(GM)
+
+    data.display()
+    # np.savetxt('/Users/antoinerousseau/Desktop/data.csv', np.array([X, data_WM, data_GM]).T, delimiter='\t', fmt="%s")
+
+
+# test_Memoire_array()
 
 # shavDataRaw()
 # PCADeapoliLiveMonkeyDataSTNl()
@@ -828,3 +854,4 @@ test_Memoire_array()
 # VealBrain()
 # ScaleWhiteRef()
 # ElaheData()
+WM_GM_dan()
