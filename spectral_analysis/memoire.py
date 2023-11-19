@@ -5,6 +5,12 @@ import os
 import pandas as pd
 import multiprocessing
 
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+import warnings
+
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+
 main_df = pd.DataFrame({'Params':[],
                      'Total Accuracy':[],
                      'Accuracy per label':[],
@@ -125,8 +131,8 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
     print(len(all_parameters))
 
 
-    with multiprocessing.Pool(16) as pool:
-        all_results = pool.starmap(compute_combo, all_parameters[0:4])
+    with multiprocessing.Pool(18) as pool:
+        all_results = pool.starmap(compute_combo, all_parameters)
 
     for result, parameters in zip(all_results, all_parameters):
         FP_tot_accuracy, FP_accuracy_per_label, FP_max_val_list, FP_max_str_list, FP_label_str, FP_mat = result
