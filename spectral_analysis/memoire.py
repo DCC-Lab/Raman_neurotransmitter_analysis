@@ -405,6 +405,6 @@ def iterate_trough_permutations():
 if __name__ == '__main__':
     iterate_trough_permutations()
 # main.to_csv('Memoire_df.csv   ', index=False)
-main_df.to_csv('test.csv', index=False)
+main_df.to_csv('Memoire_df_1.csv', index=False)
 
 # print(main)
