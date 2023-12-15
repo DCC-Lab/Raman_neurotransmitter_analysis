@@ -278,6 +278,7 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
         data.butterworthFilter(cutoff_frequency=f_param[0], order=f_param[1])
 
     if FDRC_array[1] == 2:
+        data.cut(400, 3020, WN=True)
         data.ORPL(min_bubble_widths=f_param[0])
 
     # Get WN region
@@ -332,7 +333,8 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
 
 def iterate_trough_permutations():
     pre = [0, 1]
-    filter = [0, 1, 2]
+    # filter = [0, 1, 2]
+    filter = [2]
     # DR = [0, 1, 2, 3, 4]
     DR = [0, 1, 4]
     cluster = [0, 1, 2]
@@ -405,6 +407,6 @@ def iterate_trough_permutations():
 if __name__ == '__main__':
     iterate_trough_permutations()
 # main.to_csv('Memoire_df.csv   ', index=False)
-main_df.to_csv('Memoire_df_1.csv', index=False)
+main_df.to_csv('Memoire_df_2.csv', index=False)
 
 # print(main)

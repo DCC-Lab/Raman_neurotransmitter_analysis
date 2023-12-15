@@ -1049,16 +1049,32 @@ class Spectra:
 
         spectra = self.spectra
         spectra = np.delete(spectra, label_index_list, 0)
-        self.spectra = spectra
+        self.spectra = list(spectra)
         self._loadData()
-        if self.annotations != None:
+        if self.annotations is not None:
             self.annotations = np.delete(self.annotations, label_index_list, 0)
+
+    def removelown(self, n):
+        # Removes spectrum objects from the spectra object that has less then n spectrum object with same label
+        unique_array = np.unique(np.array(self.labelList))
+
+        for label in unique_array:
+            x = [i for i, j in enumerate(self.labelList) if j == label]
+            if len(x) < n:
+                for i in sorted(x, reverse=True):
+                    del self.labelList[i]
+                    del self.spectra[i]
+                    if self.annotations != None:
+                        del self.annotations[i]
+                        assert len(self.labelList) == len(self.annotations), 'There should be as many annotation as the number of label there is. Now, there is {0} label and {1} annotation'.format(len(self.labelList), len(self.annotations))
+
+        self._loadData()
 
     def changeLabel(self, new_label):
         if type(new_label) == str:
             for spectrum in self.spectra:
                 spectrum.label = new_label
-        if type(new_label) == list or type(new_label) == np.ndarray:
+        elif type(new_label) == list or type(new_label) == np.ndarray:
             for i in range(len(self.spectra)):
                 self.spectra[i].label = new_label[i]
         else:
@@ -1076,8 +1092,13 @@ class Spectra:
 
     def addAnnotation(self, annotation):
         self.annotations = []
-        for i in range(len(self.spectra)):
-            self.annotations.append(annotation)
+
+        if type(annotation) == str:
+            for i in range(len(self.spectra)):
+                self.annotations.append(annotation)
+
+        if type(annotation) == list:
+            self.annotations = annotation
 
     def sumSpec(self):
         new_counts = np.zeros(np.shape(self.spectra[0].counts))
@@ -1266,9 +1287,11 @@ class Spectra:
 
     def displayMeanSTD(self, WN=True, display_label=True):
         labels = self._Unique(self.labelList)
-        # color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
         color_list = ['k', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        if len(labels) >= len(color_list):
+            color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
+
         empty_lists = [[] for _ in range(len(labels))]
         WL_values = [[] for _ in range(len(labels))]
         WN_values = [[] for _ in range(len(labels))]
@@ -2919,7 +2942,8 @@ class Spectra:
     @staticmethod
     def enlever_chiffres(string):
         for i in range(len(string)):
-            if not string[i].isalpha():
+            if string[i].isnumeric():
+            # if not string[i].isalpha():
                 return string[:i]
         return string
 
@@ -3087,6 +3111,8 @@ class Spectra:
                 for spectrum in self.spectra:
                     if self.enlever_chiffres(spectrum.label) == label:
                         current_spectra.append(spectrum.counts)
+                    else:
+                        continue
                 current_spectra = np.array(current_spectra)
                 average = np.mean(current_spectra, axis=0)
                 std = np.std(current_spectra, axis=0)
@@ -3097,8 +3123,6 @@ class Spectra:
             for spectrum in test_spectra:
                 r2_scores = []
                 for i in range(len(average_spectra)):
-                    # print(average_spectra[i])
-                    # print(spectrum.counts)
                     r2_score = sklearn.metrics.r2_score(average_spectra[i], spectrum.counts)
                     r2_scores.append(r2_score)
 
@@ -3161,9 +3185,9 @@ class Spectra:
         plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
-        cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
-        sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        # cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
+        # sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
@@ -3325,9 +3349,9 @@ class Spectra:
         plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
-        cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
-        sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        # cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
+        # sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 

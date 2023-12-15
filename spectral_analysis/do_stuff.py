@@ -182,21 +182,21 @@ import os
 
 #victoria
 
-path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/6mo/'
-
-data = []
-for dir in os.listdir(path):
-    if dir[0] == '.':
-        continue
-    data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
-
-data = spectrum.Spectra(data)
-# data.display(WN=False)
-
-data.pca()
-
-data.pcaDisplay(1, 2)
-data.pcaScatterPlot(1, 2)
+# path = '/Users/antoinerousseau/Desktop/M83(ho)/Photopic/6mo/'
+#
+# data = []
+# for dir in os.listdir(path):
+#     if dir[0] == '.':
+#         continue
+#     data.append(spectrum.Acquisition(path + dir + '/', fileType='VF', extension='').spectra())
+#
+# data = spectrum.Spectra(data)
+# # data.display(WN=False)
+#
+# data.pca()
+#
+# data.pcaDisplay(1, 2)
+# data.pcaScatterPlot(1, 2)
 
 
 
@@ -983,8 +983,8 @@ def compareSum():
 # l4()
 
 
-ldatest()
-# monomere()
+# ldatest()
+# monomere( )
 # monomereVis()
 # monoVSfib()
 # fibril()
@@ -1345,13 +1345,15 @@ def testeroni():
 
 
 
-    # caudate_WM.tile(x=6, y=6, WN_to_display=2848)
-    # putamen_WM.tile(x=6, y=6, WN_to_display=2848)
-    # STN_SN.tile(x=16, y=6, WN_to_display=1434)
-    # STN_SN.tile(x=16, y=6, WN_to_display=1360)
-    # STN_SN.tile(x=16, y=6, WN_to_display=2847)
-    # STN_SN.tile(x=16, y=6, WN_to_display=2880)
-    # STN_SN.tile(x=16, y=6, WN_to_display=2933)
+    caudate_WM.tile(x=6, y=6, WN_to_display=2848)
+    putamen_WM.tile(x=6, y=6, WN_to_display=2848)
+    STN_SN.tile(x=16, y=6, WN_to_display=1434)
+    STN_SN.tile(x=16, y=6, WN_to_display=1360)
+    STN_SN.tile(x=16, y=6, WN_to_display=2847)
+    STN_SN.tile(x=16, y=6, WN_to_display=2880)
+    STN_SN.tile(x=16, y=6, WN_to_display=2933)
+
+testeroni()
 
 
 
@@ -1418,8 +1420,8 @@ def txt_to_json(folder_path, output_file):
 
 
 # Usage example
-folder_path = '/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/Thalamus6_1'  # Replace with the actual folder path
-output_file = '/Users/antoinerousseau/Downloads/test/test.json'  # Replace with the desired output file path
+# folder_path = '/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/Thalamus6_1'  # Replace with the actual folder path
+# output_file = '/Users/antoinerousseau/Downloads/test/test.json'  # Replace with the desired output file path
 
 # txt_to_json(folder_path, output_file)
 

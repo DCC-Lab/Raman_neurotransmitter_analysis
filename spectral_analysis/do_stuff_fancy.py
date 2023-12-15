@@ -10,6 +10,8 @@ import gym
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import io
+from scipy.stats import norm
+
 
 
 
@@ -668,7 +670,8 @@ def test_R2_class():
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
     data.CRRemoval()
-    data.R2_classifier()
+    # data.R2_classifier()
+    data.prob_classifier()
 
 
 def test_plt_cancel():
@@ -810,8 +813,235 @@ def test_Memoire_array():
             real_mat.append(real_row)
         matrice.append(real_mat)
 
+    print(matrice)
 
-# TODO:test all the previous stuff
+
+def Memoire_array():
+    anal_data = pd.read_csv('Memoire_df_1.csv')
+    anal_data = anal_data.drop(anal_data.columns[1:6], axis=1)
+
+    anal_data = anal_data.rename(columns={"Total_Accuracy": "TotAcc"})
+    # anal_data = anal_data.rename(columns={"Total Accuracy": "TotAcc", "Accuracy per label": "Accuracy_per_label", "Max val list": "Max_val_list", "Max str list": "Max_str_list", "Label str": "Label_str"})
+    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
+    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
+    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
+    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
+    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
+
+
+    # print(anal_data.loc[0,:])
+    # # print(anal_data.head())
+
+    params = []
+    totacc = []
+    accperlab = []
+    maxval = []
+    maxstr = []
+    labelstr = []
+    matrice = []
+
+    # Get params as a list
+    for param in anal_data["Params"]:
+        param = param.replace("['", "")
+        param = param.replace("']", "")
+        param_as_list = param.split("', '")
+        params.append(param_as_list)
+    anal_data.Params = params
+
+    # Get tot acc as a float
+    for acc in anal_data["TotAcc"]:
+        totacc.append(float(acc))
+    anal_data.TotAcc = totacc
+
+    # Get Accuracy per label as list of floats
+    for acc in anal_data["Accuracy_per_label"]:
+        acc = acc.replace('[', '')
+        acc = acc.replace(']', '')
+        acc = acc.split(', ')
+        for i in range(len(acc)):
+            assert type(acc[i]) == str, '{0} is type {1}. It should be a srting'.format(acc[i], type(acc[i]))
+            acc[i] = float(acc[i])
+        accperlab.append(acc)
+    anal_data.Accuracy_per_label = accperlab
+
+    # Get Max val as list of floats
+    for acc in anal_data["Max_val_list"]:
+        acc = acc.replace('[', '')
+        acc = acc.replace(']', '')
+        acc = acc.split(', ')
+        for i in range(len(acc)):
+            acc[i] = float(acc[i])
+        maxval.append(acc)
+    anal_data.Max_val_list = maxval
+
+
+    # Get Max str as list
+    for label in anal_data["Max_str_list"]:
+        label = label.replace("['", "")
+        label = label.replace("']", "")
+        label = label.split("', '")
+        maxstr.append(label)
+    anal_data.Max_str_list = maxstr
+
+
+    # Get label_str as list
+    for label in anal_data["Label_str"]:
+        label = label.replace("['", "")
+        label = label.replace("']", "")
+        label = label.split("', '")
+        labelstr.append(label)
+    anal_data.Label_str = labelstr
+
+
+    # Get matrice as 2d array
+    for mat in anal_data["Matrice"]:
+        real_mat = []
+        mat = mat.replace('[', '')
+        mat = mat.replace(']', '')
+        mat = mat.split('\n')
+        for row in mat:
+            data = row.split(' ')
+            real_row = []
+
+            for i in range(len(data)):
+                if data[i] != '':
+                    real_row.append(int(data[i]))
+            real_mat.append(real_row)
+        matrice.append(real_mat)
+
+    # DO stuff
+    #get differential accuracy (Total accuracy - no raman region accuracy)
+    assert len(params) == len(totacc), 'pas le même nombre de params et de totacc valeurs'
+
+    AccDiff = []
+    for i, param in enumerate(params):
+        param = param[0:5]
+        param.append('No Raman Region')
+        NR_index = params.index(param)
+        # calculate accdiff
+        diff_acc = totacc[i] - totacc[NR_index]
+        AccDiff.append(diff_acc)
+
+
+
+
+    #create a dataframe, cause life is life
+    df = pd.DataFrame({'params': params, 'TotAcc': totacc, 'AccDiff': AccDiff})
+    # print(df)
+
+
+
+
+    top = range(len(params))
+    # toptot = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1000:]
+    # top = sorted(range(len(AccDiff)), key=lambda i: AccDiff[i])[-1000:]
+    best = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1:]
+    bests = sorted(range(len(totacc)), key=lambda i: totacc[i])[-10:]
+    # for i, best in enumerate(bests):
+    #     print('best  is {0} with acc of {1}'.format(params[bests[i]], totacc[bests[i]]))
+
+    param_to_eval = 0
+
+
+    unique_params = []
+    for i, param in enumerate(params):
+        if param[param_to_eval] not in unique_params and i in top:
+            unique_params.append(param[param_to_eval])
+    print(unique_params)
+
+    #prepare the data array to receive all the values
+    data = []
+    for i in range(len(unique_params)):
+        data.append([])
+
+
+    for i, param in enumerate(params):
+        if i in top:
+            index = unique_params.index(param[param_to_eval])
+            # data[index].append(totacc[i])
+            data[index].append(AccDiff[i])
+
+
+    data_df = None
+    for i in range(len(unique_params)):
+        if unique_params[i] != 'No Raman Region':
+            if i == 0:
+                data_df = pd.DataFrame({unique_params[i]: data[i]})
+            if i != 0:
+                data_df[unique_params[i]] = data[i]
+
+    mean_std_array = []
+    for x in data:
+        mean = np.mean(x)
+        std = np.std(x)
+        small_array = [mean, std]
+        mean_std_array.append(small_array)
+
+    # Iterate through the parameters
+    # for i in range(len(data)):
+    data_df.plot.kde()
+
+    # Plot formatting
+
+
+
+    # print(top)
+    x = np.arange(0, 0.5, 0.001)
+    plt.xlabel('Accuracy')
+    plt.ylabel('Frequency')
+    # plt.plot(x, norm.pdf(x, mean_std_array[0][0], mean_std_array[0][1]), label=unique_params[0] + ', {0}'.format(len(data[0])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[1][0], mean_std_array[1][1]), label=unique_params[1] + ', {0}'.format(len(data[1])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[2][0], mean_std_array[2][1]), label=unique_params[2] + ', {0}'.format(len(data[2])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[3][0], mean_std_array[3][1]), label=unique_params[3] + ', {0}'.format(len(data[3])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[4][0], mean_std_array[4][1]), label=unique_params[4] + ', {0}'.format(len(data[4])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[5][0], mean_std_array[5][1]), label=unique_params[5] + ', {0}'.format(len(data[5])))
+    plt.legend()
+    plt.show()
+    # plt.plot(x, norm.pdf(x, mean_std_array[6][0], mean_std_array[6][1]), label=unique_params[6] + ', {0}'.format(len(data[6])))
+    # plt.legend()
+    # plt.show()
+    # plt.plot(x, norm.pdf(x, mean_std_array[7][0], mean_std_array[7][1]), label=unique_params[7] + ', {0}'.format(len(data[7])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[8][0], mean_std_array[8][1]), label=unique_params[8] + ', {0}'.format(len(data[8])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[9][0], mean_std_array[9][1]), label=unique_params[9] + ', {0}'.format(len(data[9])))
+    # plt.legend()
+    # plt.show()
+    # plt.plot(x, norm.pdf(x, mean_std_array[10][0], mean_std_array[10][1]), label=unique_params[10] + ', {0}'.format(len(data[10])))
+    # plt.plot(x, norm.pdf(x, mean_std_array[11][0], mean_std_array[11][1]), label=unique_params[11] + ', {0}'.format(len(data[11])))
+    # plt.legend()
+    # plt.show()
+
+def just_displaying():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+
+    data.savgolFilter(5, 2)
+    data.butterworthFilter(5, 3)
+    data.cut(2810, 3020, WN=True)
+    data.normalizeIntegration()
+    data.pca(nbOfComp=8)
+
+    data.shortenLabels()
+    data.pcaDisplay(1, 2)
+    data.pcaDisplay(3, 4)
+    data.pcaScatterPlot(1, 2)
+    # data.pcaScatterPlot(3, 4)
+
+
+    # tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str, mat = data.PCA_KNNIndividualLabel(nn=10, return_details=True)
+    # print(tot_accuracy)
+
+# just_displaying()
+
 
 
 def WM_GM_dan():
@@ -841,8 +1071,39 @@ def WM_GM_dan():
     # np.savetxt('/Users/antoinerousseau/Desktop/data.csv', np.array([X, data_WM, data_GM]).T, delimiter='\t', fmt="%s")
 
 
+def memoire_singe():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/darknoise/').spectraSum()
+
+    # WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/WM/').spectra()
+    # GM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/GM/').spectra()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/Monkey_brain/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.cut(400, 3025, WN=True)
+    # data.ORPL(150, display=True)
+    data.ALS(10, 0.01)
+    data.cut(400, 1800, WN=True)
+
+
+    data.displayMeanSTD()
+
+    # np.savetxt('/Users/antoinerousseau/Desktop/data.csv', np.array([X, data_WM, data_GM]).T, delimiter='\t', fmt="%s")
+
+
+memoire_singe()
+
+# test_R2_class()
 # test_Memoire_array()
 
+# Memoire_array()
 # shavDataRaw()
 # PCADeapoliLiveMonkeyDataSTNl()
 # KnifeEdgeTrick('/Users/antoinerousseau/Downloads/Field_of_view/Grey_IMV/')
@@ -854,4 +1115,4 @@ def WM_GM_dan():
 # VealBrain()
 # ScaleWhiteRef()
 # ElaheData()
-WM_GM_dan()
+# WM_GM_dan()
