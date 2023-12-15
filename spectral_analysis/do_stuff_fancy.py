@@ -1088,14 +1088,29 @@ def memoire_singe():
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
     data.cut(400, 3025, WN=True)
-    # data.ORPL(150, display=True)
-    data.ALS(10, 0.01)
-    data.cut(400, 1800, WN=True)
+    data.ORPL(70)
+    # data.ALS(10, 0.01)
+    # data.cut(400, 1800, WN=True)
+    # data.displayMeanSTD()
+    data.displayMeanSTD(save_fig='singe_data_display.png')
 
+    data.pca()
+    data.pcaDisplay(1)
+    # data.pcaDisplay(3, 4)
+    # data.pcaDisplay(5, 6)
+    # data.pcaDisplay(7, 8)
+    # data.pcaDisplay(9, 10)
 
-    data.displayMeanSTD()
+    data.pcaScatterPlot(1)
 
-    # np.savetxt('/Users/antoinerousseau/Desktop/data.csv', np.array([X, data_WM, data_GM]).T, delimiter='\t', fmt="%s")
+    # data.pcaScatterPlot(3, 4)
+    #
+    # data.pcaScatterPlot(5, 6)
+    #
+    # data.pcaScatterPlot(7, 8)
+    #
+    # data.pcaScatterPlot(9, 10)
+
 
 
 memoire_singe()

@@ -1285,9 +1285,9 @@ class Spectra:
                 unique_list.append(elem)
         return unique_list
 
-    def displayMeanSTD(self, WN=True, display_label=True):
+    def displayMeanSTD(self, WN=True, display_label=True, save_fig=None, figsize=(12, 6)):
         labels = self._Unique(self.labelList)
-        color_list = ['k', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
+        color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
         if len(labels) >= len(color_list):
             color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
@@ -1310,6 +1310,7 @@ class Spectra:
             data_means.append(np.mean(data_ordered[i], axis=0))
             data_STD.append(np.std(data_ordered[i], axis=0))
 
+        plt.figure(figsize=figsize)
         if WN == False:
             for i in range(len(labels)):
                 plt.plot(WL_values[i], data_means[i], color=color_list[i])
@@ -1330,6 +1331,8 @@ class Spectra:
                 plt.plot([], [], label=labels[i], color=color_list[i])
             plt.legend()
 
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
         plt.show()
 
     def removeThermalNoise(self, TNToRemove):
@@ -1473,14 +1476,21 @@ class Spectra:
 
         return newData
 
-    def pcaDisplay(self, *PCs, WN=True):
+    def pcaDisplay(self, *PCs, WN=True, figsize=(12, 6)):
+        labels = self._Unique(self.labelList)
+        color_list = ['black', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
+                      '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        if len(labels) >= len(color_list):
+            color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
+
+        plt.figure(figsize=figsize)
         if WN == True:
-            for PC in PCs:
-                plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+            for i, PC in enumerate(PCs):
+                plt.plot(self.spectra[0].wavenumbers, self.PC[PC - 1].counts, label=self.PC[PC - 1].label, color=color_list[i])
             plt.xlabel('Wavenumbers [cm-1]')
         if WN == False:
-            for PC in PCs:
-                plt.plot(self.spectra[0].wavelenghts, self.PC[PC - 1].counts, label=self.PC[PC - 1].label)
+            for i, PC in enumerate(PCs):
+                plt.plot(self.spectra[0].wavelenghts, self.PC[PC - 1].counts, label=self.PC[PC - 1].label, color=color_list[i])
             plt.xlabel('Wavelengths [nm]')
         plt.legend()
         plt.show()
@@ -1605,33 +1615,39 @@ class Spectra:
         self.tsne_df = pd.DataFrame(tsne_data, index=self.TSNElabels, columns=self.TSNEcolumns)
 
     def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False):
+        labels = self._Unique(self.labelList)
+        color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
+                      '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        if len(labels) >= len(color_list):
+            color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
+
         self._loadData()
         self._getPCAdf()
 
         if AnnotationToDisplay == None:
             if show_annotations == False:
                 if PCy == None and PCz == None:
-                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels)
+                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, color_discrete_sequence=color_list)
 
                 if PCz == None and PCy != None:
-                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels)
+                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels, color_discrete_sequence=color_list)
 
                 if PCy != None and PCz != None:
                     fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
-                                        z='PC{0}'.format(PCz), color=self.PCAlabels)
+                                        z='PC{0}'.format(PCz), color=self.PCAlabels, color_discrete_sequence=color_list)
 
             if show_annotations == True:
                 if PCy == None and PCz == None:
-                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, text=self.annotations)
+                    fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, text=self.annotations, color_discrete_sequence=color_list)
 
                 if PCz == None and PCy != None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels,
-                                     text=self.annotations)
+                                     text=self.annotations, color_discrete_sequence=color_list)
 
                 if PCy != None and PCz != None:
                     fig = px.scatter_3d(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
                                         z='PC{0}'.format(PCz),
-                                        color=self.PCAlabels, text=self.annotations)
+                                        color=self.PCAlabels, text=self.annotations, color_discrete_sequence=color_list)
 
         if AnnotationToDisplay != None:
             toDisplayList = []
@@ -1646,14 +1662,14 @@ class Spectra:
 
             if show_annotations == False:
                 if PCy == None and PCz == None:
-                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels)
+                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, color_discrete_sequence=color_list)
 
                 if PCz == None and PCy != None:
-                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels)
+                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels, color_discrete_sequence=color_list)
 
                 if PCy != None and PCz != None:
                     fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
-                                        z='PC{0}'.format(PCz), color=temp_PCAlabels)
+                                        z='PC{0}'.format(PCz), color=temp_PCAlabels, color_discrete_sequence=color_list)
 
             if show_annotations == True:
 
@@ -1661,18 +1677,18 @@ class Spectra:
                 for i in toDisplayList:
                     temp_annotations.append(self.annotations[i])
                 if PCy == None and PCz == None:
-                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, text=temp_annotations)
+                    fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, text=temp_annotations, color_discrete_sequence=color_list)
                     print('ok')
 
                 if PCz == None and PCy != None:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels,
-                                     text=temp_annotations)
+                                     text=temp_annotations, color_discrete_sequence=color_list)
                     print('ok')
 
                 if PCy != None and PCz != None:
                     fig = px.scatter_3d(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy),
                                         z='PC{0}'.format(PCz),
-                                        color=temp_PCAlabels, text=temp_annotations)
+                                        color=temp_PCAlabels, text=temp_annotations, color_discrete_sequence=color_list)
                     print('ok')
 
         plot(fig)
@@ -3185,9 +3201,9 @@ class Spectra:
         plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
-        # cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
-        # sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
+        sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
@@ -3349,9 +3365,9 @@ class Spectra:
         plt.clf()
 
         mat = confusion_matrix(new_label_list, prediction_list_str, labels=label_str)
-        # cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
-        # sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
+        sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+        # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
