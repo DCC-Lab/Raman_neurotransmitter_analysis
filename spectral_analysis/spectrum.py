@@ -1116,13 +1116,13 @@ class Spectra:
             for spectrum in self.spectra:
                 plt.plot(spectrum.wavelenghts, spectrum.counts,
                          label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
-                plt.xlabel('Wavelenghts [nm]')
+            plt.xlabel('Wavelenghts [nm]')
 
         if WN == True:
             for spectrum in self.spectra:
                 plt.plot(spectrum.wavenumbers, spectrum.counts,
                          label=spectrum.label + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s')
-                plt.xlabel('Wavenumbers [cm-1]')
+            plt.xlabel('Wavenumbers [cm-1]')
 
         plt.ylabel('Counts [-]')
         if label == True:
@@ -1277,6 +1277,80 @@ class Spectra:
 
         plt.show()
 
+    # fonction très specifique (not good)
+    def displaySOD(self, label=True, WN=True):
+        palette = sns.color_palette("Blues", len(self.spectra))
+
+        # Normaliser l'index de la courbe pour couvrir presque entièrement la plage de couleur
+        max_index = len(self.spectra) - 1
+        normalized_indices = np.linspace(0, max_index, len(self.spectra))
+
+        for i, spectrum in enumerate(self.spectra):
+            couleur_pale = palette[int(normalized_indices[i])]
+            plt.plot(spectrum.wavenumbers, spectrum.counts,
+                     label=str(spectrum.label) + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s', color=couleur_pale)
+            plt.xlabel('Wavenumbers [cm-1]')
+
+        plt.ylabel('Counts [-]')
+        if label == True:
+            plt.legend()
+        plt.show()
+
+    #very specific fonction (not good)
+    def fix_brain_depth(self):
+        labels = self._Unique(self.labelList)
+
+        empty_lists = [[] for _ in range(len(labels))]
+        WL_values = [[] for _ in range(len(labels))]
+        WN_values = [[] for _ in range(len(labels))]
+        for spectrum in self.spectra:
+            for i in range(len(labels)):
+                if spectrum.label == labels[i]:  # ca va pt chier ici
+                    empty_lists[i].append(spectrum.counts)
+                    if len(WL_values[i]) == 0:
+                        WL_values[i] = spectrum.wavelenghts
+                        WN_values[i] = spectrum.wavenumbers
+
+        data_ordered = empty_lists
+        data_means = []
+        data_STD = []
+        for i in range(len(labels)):
+            data_means.append(np.mean(data_ordered[i], axis=0))
+            data_STD.append(np.std(data_ordered[i], axis=0))
+
+
+        for index1, label_to_fix in enumerate(labels):
+            factor_array = []
+            for i in range(len(data_STD[index1])):
+                # par rapport à un autre indice
+                # factor = (data_STD[index2][i] / data_STD[index1][i])
+
+                # par rapport à la moyenne des STD de chaque label individuel
+                factor = (np.mean(data_STD, axis=0)[i] / data_STD[index1][i])
+
+                factor_array.append(factor)
+
+            new_spectres = []
+            for i, spectre in enumerate(data_ordered[index1]):
+                new_spectre = list(np.array(spectre) * np.array(factor_array))
+                new_spectres.append(new_spectre)
+
+            count = 0
+            for spectrum in self.spectra:
+                if spectrum.label == label_to_fix:
+                    count += 1
+
+            assert len(new_spectres) == count, 'there should ba as many spectra before then after this operation. now, there is {0} elements in new_spectres and {1} elements in empty_lists[index1]'.format(len(new_spectres), len(data_ordered[index1]))
+
+            j = 0
+            for spectrum in self.spectra:
+                if spectrum.label == label_to_fix:
+                    spectrum.counts = new_spectres[j]
+                    j += 1
+
+        self._loadData()
+
+
     @staticmethod
     def _Unique(liste):
         unique_list = []
@@ -1289,6 +1363,18 @@ class Spectra:
         labels = self._Unique(self.labelList)
         color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        color_list = [
+            '#1f77b4',  # muted blue
+            '#ff7f0e',  # safety orange
+            '#2ca02c',  # cooked asparagus green
+            '#d62728',  # brick red
+            '#9467bd',  # muted purple
+            '#8c564b',  # chestnut brown
+            '#e377c2',  # raspberry yogurt pink
+            '#7f7f7f',  # middle gray
+            '#bcbd22',  # curry yellow-green
+            '#17becf'  # blue-teal
+        ]
         if len(labels) >= len(color_list):
             color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in range(len(labels))]
 
@@ -1453,7 +1539,7 @@ class Spectra:
             self.SV.append(self.PCA.singular_values_[i])
             self.EVR.append(self.PCA.explained_variance_ratio_[i])
             self.PC.append(Spectrum(self.spectra[0].wavelenghts, self.PCA.components_[i], 1,
-                                    'PC{0}, val propre = {1}'.format(i + 1, self.PCA.explained_variance_ratio_[i])))
+                                    'PC{0}, val propre = {1}'.format(i + 1, round(self.PCA.explained_variance_ratio_[i], 4))))
 
     def subtractPCToData(self, PC):
         self._getSpectraAVG()
@@ -1476,7 +1562,7 @@ class Spectra:
 
         return newData
 
-    def pcaDisplay(self, *PCs, WN=True, figsize=(12, 6)):
+    def pcaDisplay(self, *PCs, WN=True, figsize=(12, 6), save_fig=None):
         labels = self._Unique(self.labelList)
         color_list = ['black', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
@@ -1493,6 +1579,8 @@ class Spectra:
                 plt.plot(self.spectra[0].wavelenghts, self.PC[PC - 1].counts, label=self.PC[PC - 1].label, color=color_list[i])
             plt.xlabel('Wavelengths [nm]')
         plt.legend()
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
         plt.show()
 
     def _getPCAdf(self, SC=False):
@@ -1614,7 +1702,7 @@ class Spectra:
         # print(np.shape(pca_data))
         self.tsne_df = pd.DataFrame(tsne_data, index=self.TSNElabels, columns=self.TSNEcolumns)
 
-    def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False):
+    def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False, save_fig=None):
         labels = self._Unique(self.labelList)
         color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
@@ -1628,6 +1716,11 @@ class Spectra:
             if show_annotations == False:
                 if PCy == None and PCz == None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, color_discrete_sequence=color_list)
+                    fig.update_xaxes(showgrid=False)
+                    fig.update_yaxes(showgrid=False,
+                                     zeroline=True, zerolinecolor='black', zerolinewidth=3,
+                                     showticklabels=False)
+                    fig.update_layout(height=(100 * (len(labels) - 1)), plot_bgcolor='white')
 
                 if PCz == None and PCy != None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels, color_discrete_sequence=color_list)
@@ -1639,6 +1732,11 @@ class Spectra:
             if show_annotations == True:
                 if PCy == None and PCz == None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), color=self.PCAlabels, text=self.annotations, color_discrete_sequence=color_list)
+                    fig.update_xaxes(showgrid=False)
+                    fig.update_yaxes(showgrid=False,
+                                     zeroline=True, zerolinecolor='black', zerolinewidth=3,
+                                     showticklabels=False)
+                    fig.update_layout(height=200, plot_bgcolor='white')
 
                 if PCz == None and PCy != None:
                     fig = px.scatter(self.pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=self.PCAlabels,
@@ -1663,6 +1761,11 @@ class Spectra:
             if show_annotations == False:
                 if PCy == None and PCz == None:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, color_discrete_sequence=color_list)
+                    fig.update_xaxes(showgrid=False)
+                    fig.update_yaxes(showgrid=False,
+                                     zeroline=True, zerolinecolor='black', zerolinewidth=3,
+                                     showticklabels=False)
+                    fig.update_layout(height=200, plot_bgcolor='white')
 
                 if PCz == None and PCy != None:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), y='PC{0}'.format(PCy), color=temp_PCAlabels, color_discrete_sequence=color_list)
@@ -1678,6 +1781,11 @@ class Spectra:
                     temp_annotations.append(self.annotations[i])
                 if PCy == None and PCz == None:
                     fig = px.scatter(temp_pca_df, x='PC{0}'.format(PCx), color=temp_PCAlabels, text=temp_annotations, color_discrete_sequence=color_list)
+                    fig.update_xaxes(showgrid=False)
+                    fig.update_yaxes(showgrid=False,
+                                     zeroline=True, zerolinecolor='black', zerolinewidth=3,
+                                     showticklabels=False)
+                    fig.update_layout(height=200, plot_bgcolor='white')
                     print('ok')
 
                 if PCz == None and PCy != None:
@@ -1691,6 +1799,15 @@ class Spectra:
                                         color=temp_PCAlabels, text=temp_annotations, color_discrete_sequence=color_list)
                     print('ok')
 
+        if save_fig != None:
+            fig.update_xaxes(showgrid=False, zeroline=False)
+            fig.update_layout(margin=go.layout.Margin(
+                l=0,  # left margin
+                r=0,  # right margin
+                b=0,  # bottom margin
+                t=0  # top margin
+            ))
+            fig.write_image(save_fig, scale=3)
         plot(fig)
 
     def getRatioPhotonPerCount(self):
@@ -2328,7 +2445,7 @@ class Spectra:
             print('Best accuracy calculated yet = {0}'.format(best_accuracy))
             return best_accuracy
 
-    def PCA_KNNIndividualSpec(self, save=False, return_accuracy=False):
+    def PCA_KNNIndividualSpec(self, nn=5, save_fig=None, return_accuracy=False):
         nb_of_good_pred = 0
         prediction_list = []
 
@@ -2352,7 +2469,7 @@ class Spectra:
             data = self.pca_df.to_numpy()
 
             # Make the KNN prediction for the train data
-            neigh = KNeighborsClassifier(n_neighbors=5)
+            neigh = KNeighborsClassifier(n_neighbors=nn)
             neigh.fit(data, int_label_list)
             pred = neigh.predict(spectrum_to_classify_in_RD_space)[0]
             prediction_list.append(pred)
@@ -2378,8 +2495,9 @@ class Spectra:
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
-        if save == True:
-            plt.savefig('/Users/antoinerousseau/Desktop/confusion_matrix.eps')
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
+
         plt.show()
 
         if return_accuracy == True:
@@ -2440,7 +2558,8 @@ class Spectra:
         if return_accuracy == True:
             return nb_of_good_pred / len(self.spectra)
 
-    def PCA_KNNIndividualLabel(self, save=False, return_accuracy=False, return_details=False, display=True, keep_single_label=False, nn=5, n_comp=10):
+    def PCA_KNNIndividualLabel(self, save_fig=None, return_accuracy=False, return_details=False, display=True, keep_single_label=False, nn=5):
+        # TODO faire le save_fig pour les autres fonction similaires
         #This method requires that all the acquisitions have different labels.
         nb_of_good_pred = 0
         prediction_list = []
@@ -2531,8 +2650,9 @@ class Spectra:
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
-        if save == True:
-            plt.savefig('/Users/antoinerousseau/Desktop/confusion_matrix.eps')
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
+
         if display == True:
             plt.show()
 

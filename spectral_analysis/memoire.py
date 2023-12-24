@@ -116,7 +116,8 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
 
                                 for C_1 in C1:
 # -------------------------------------------------
-                                    for WN_region in [1, 2, 3]:
+#                                     for WN_region in [1, 2, 3, 4]:
+                                    for WN_region in [4]:
                                         parameters = (
                                         FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], WN_region, normalize)
                                         all_parameters.append(parameters)
@@ -128,10 +129,10 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
                                     # all_parameters.append(parameters)
 
     # print(all_parameters)
-    print(len(all_parameters))
+    # print(len(all_parameters))
 
 
-    with multiprocessing.Pool(18) as pool:
+    with multiprocessing.Pool(24) as pool:
         all_results = pool.starmap(compute_combo, all_parameters)
 
     for result, parameters in zip(all_results, all_parameters):
@@ -149,6 +150,8 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
             spec_region = "No Raman Region"
         if WN_region == 3:
             spec_region = "High Wavenumbers"
+        if WN_region == 4:
+            spec_region = 'All Raman Regions'
 
         FP_df = pd.DataFrame(pd.DataFrame({'Params': [[pre.format(p_1, p_2),
                                                       filter.format(f_1, f_2),
@@ -288,6 +291,9 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
         data.cut(2000, 2600, WN=True)
     if k == 3:
         data.cut(2810, 3020, WN=True)
+    if k == 4:
+        data.cut(400, 3020, WN=True)
+        data.remove(1800, 2810, WN=True)
 
     if normalize == True:
         data.normalizeIntegration()
@@ -333,8 +339,8 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
 
 def iterate_trough_permutations():
     pre = [0, 1]
-    # filter = [0, 1, 2]
-    filter = [2]
+    filter = [0, 1, 2]
+    # filter = [2]
     # DR = [0, 1, 2, 3, 4]
     DR = [0, 1, 4]
     cluster = [0, 1, 2]
@@ -407,6 +413,6 @@ def iterate_trough_permutations():
 if __name__ == '__main__':
     iterate_trough_permutations()
 # main.to_csv('Memoire_df.csv   ', index=False)
-main_df.to_csv('Memoire_df_2.csv', index=False)
+main_df.to_csv('Memoire_df_3.csv', index=False)
 
 # print(main)
