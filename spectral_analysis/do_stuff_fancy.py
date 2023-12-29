@@ -818,14 +818,17 @@ def test_Memoire_array():
     print(matrice)
 
 
-def Memoire_array():
+def Memoire_array(param_to_eval):
     anal_data = pd.read_csv('Memoire_df_1.csv')
     ORPL_data = pd.read_csv('Memoire_df_2.csv')
+    all_ram_data = pd.read_csv('Memoire_df_3.csv')
     anal_data = anal_data.drop(anal_data.columns[1:6], axis=1)
     ORPL_data = ORPL_data.drop(ORPL_data.columns[1:6], axis=1)
+    all_ram_data = all_ram_data.drop(all_ram_data.columns[1:6], axis=1)
 
     anal_data = anal_data.rename(columns={"Total_Accuracy": "TotAcc"})
     ORPL_data = ORPL_data.rename(columns={"Total_Accuracy": "TotAcc"})
+    all_ram_data = all_ram_data.rename(columns={"Total_Accuracy": "TotAcc"})
 
     # replace the ORPL data in anal, by the new ORPL data
     memory = None
@@ -837,17 +840,10 @@ def Memoire_array():
 
         anal_data.loc[index] = ORPL_data.loc[i]
 
-
-    # anal_data = anal_data.rename(columns={"Total Accuracy": "TotAcc", "Accuracy per label": "Accuracy_per_label", "Max val list": "Max_val_list", "Max str list": "Max_str_list", "Label str": "Label_str"})
-    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
-    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
-    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
-    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
-    # anal_data = anal_data.drop(anal_data.columns[1], axis=1)
-
-
-    # print(anal_data.loc[0,:])
-    # # print(anal_data.head())
+    # Add all_ram_data to the data
+    # print(anal_data)
+    anal_data = pd.concat([anal_data, all_ram_data], ignore_index=True)
+    # print(anal_data)
 
     params = []
     totacc = []
@@ -946,16 +942,16 @@ def Memoire_array():
     df = pd.DataFrame({'params': params, 'TotAcc': totacc, 'AccDiff': AccDiff})
 
 
-    # top = range(len(params))
-    # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1000:]
+    top = range(len(params))
+    top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1000:]
     # top = sorted(range(len(AccDiff)), key=lambda i: AccDiff[i])[-1000:]
     # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1:]
     # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-10:]
-    top = sorted(range(len(AccDiff)), key=lambda i: AccDiff[i])[-10:]
+    # top = sorted(range(len(AccDiff)), key=lambda i: AccDiff[i])[-10:]
     for i, best in enumerate(top):
         print('best  is {0} with acc of {1}'.format(params[top[i]], totacc[top[i]]))
 
-    param_to_eval = 5
+    # param_to_eval = param_to_eval
 
 
     unique_params = []
@@ -973,8 +969,8 @@ def Memoire_array():
     for i, param in enumerate(params):
         if i in top:
             index = unique_params.index(param[param_to_eval])
-            # data[index].append(totacc[i])
-            data[index].append(AccDiff[i])
+            data[index].append(totacc[i])
+            # data[index].append(AccDiff[i])
 
 
     data_df = None
@@ -987,12 +983,13 @@ def Memoire_array():
 
     legend = []
     for i in range(len(unique_params)):
+        if unique_params[i] == 'No Raman Region':
+            continue
         legend.append('{0}, n={1}'.format(unique_params[i], len(data[i])))
-        if unique_params[i] != 'No Raman Region':
-            if i == 0:
-                data_df = pd.DataFrame({unique_params[i]: data[i]})
-            if i != 0:
-                data_df = pd.concat([data_df, pd.DataFrame({unique_params[i]: data[i]})])
+        if i == 0:
+            data_df = pd.DataFrame({unique_params[i]: data[i]})
+        if i != 0:
+            data_df = pd.concat([data_df, pd.DataFrame({unique_params[i]: data[i]})], ignore_index=True)
 
     mean_std_array = []
     for x in data:
@@ -1001,6 +998,8 @@ def Memoire_array():
         small_array = [mean, std]
         mean_std_array.append(small_array)
 
+
+    print(data_df)
     # Iterate through the parameters
     # for i in range(len(data)):
     data_df.plot.kde()
@@ -1048,15 +1047,54 @@ def just_displaying():
                 '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
-    data.fix_brain_depth()
+    # data.fix_brain_depth()
 
     # data.savgolFilter(5, 2)
+    data.smooth(n=3)
     data.cut(400, 3025, WN=True)
 
     data.ORPL(min_bubble_widths=70)
+    data.remove(1800, 2810, WN=True)
+
+    data.normalizeIntegration()
+    # en danger:
+
+    putamen = data.getLabelSpectra(['putamen5_1_l', 'putamen1_l', 'putamen2_f', 'putamen2'])
+    thalamus = data.getLabelSpectra(['thalamus6_2_l', 'thalamus6_1_l', 'thalamus5_1_l', 'thalamus5_f', 'thalamus5'])
+    caudate = data.getLabelSpectra(['caudate2_2_l', 'caudate2_1_l', 'caudate2'])
+    SN = data.getLabelSpectra(['SN5_1_l', 'SN7_2_f', 'SN7_f', 'SN6_f', 'SN5_2_f', 'SN5_f', 'SN6', 'SN5_2', 'SN5'])
+    STN = data.getLabelSpectra(['STN5_1_l', 'STN6_f', 'STN5_2_f', 'STN5_f', 'STN6', 'STN5_2', 'STN5'])
+    GPi = data.getLabelSpectra(['GPi5_1_l', 'GPi3_f', 'GPi2_f', 'GPi3', 'GPi2'])
+    GPe = data.getLabelSpectra(['GPe5_1_l', 'GPe3_f', 'GPe2_f', 'GPe2'])
+    WM = data.getLabelSpectra(['WM7_2_f', 'WM7_1_f', 'WM5_1_l'])
+
+    putamen.R2_printer()
+    putamen.displayMeanSTD()
+
+    thalamus.R2_printer()
+    thalamus.displayMeanSTD()
+
+    caudate.R2_printer()
+    caudate.displayMeanSTD()
+
+    SN.R2_printer()
+    SN.displayMeanSTD()
+
+    STN.R2_printer()
+    STN.displayMeanSTD()
+
+    GPi.R2_printer()
+    GPi.displayMeanSTD()
+
+    GPe.R2_printer()
+    GPe.displayMeanSTD()
+
+    WM.R2_printer()
+    WM.displayMeanSTD()
+
     # data.cut(2810, 3020, WN=True)
     # data.normalizeIntegration()
-    data.pca(nbOfComp=8)
+    # data.pca(nbOfComp=8)
 
     # data.shortenLabels()
     # data.pcaDisplay(1, 2)
@@ -1065,8 +1103,8 @@ def just_displaying():
     # data.pcaScatterPlot(3, 4)
 
 
-    tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str, mat = data.PCA_KNNIndividualLabel(nn=10, return_details=True)
-    print(tot_accuracy)
+    # tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str, mat = data.PCA_KNNIndividualLabel(nn=10, return_details=True)
+    # print(tot_accuracy)
 
 def WM_GM_dan():
     bg = spectrum.Acquisition(
@@ -1121,6 +1159,9 @@ def figures_veau():
     bg = spectrum.Acquisition(
         '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
 
+    DOD = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateEP6_good/').spectra()
+
     data = []
     for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/data_seminaire/'):
         if dir[0] == '.':
@@ -1129,11 +1170,13 @@ def figures_veau():
             spectrum.Acquisition(
                 '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/data_seminaire/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
+    # data.add(DOD)
     data.removeThermalNoise(bg)
     data.cut(400, 3025, WN=True)
 
     # data.fix_brain_depth()
     data.ORPL(min_bubble_widths=70)
+    # data.shortenLabels()
     # data.cut(2800, 3025, WN=True)
 
     # data.normalizeIntegration()
@@ -1156,43 +1199,52 @@ def figures_veau():
     # print(acc)
 
     # Figures
-    acc = data.PCA_KNNIndividualLabel(return_accuracy=True, save_fig='veal_matrice.png')
-    print(acc)
-
+    # acc = data.PCA_KNNIndividualLabel(return_accuracy=True, save_fig='veal_matrice.png')
+    # print(acc)
+    #
     data.shortenLabels()
-    data.displayMeanSTD(save_fig='veal_data.png')
-
-    data.pcaDisplay(1, 2, save_fig='veal_PC12.png')
-    data.pcaDisplay(3, 4)
-
+    # data.displayMeanSTD(save_fig='veal_data.png')
+    #
+    # data.pcaDisplay(1, 2, save_fig='veal_PC12.png')
+    # data.pcaDisplay(3, 4)
+    #
     data.pcaScatterPlot(1, 2, save_fig='veal_scatter.png')
-    data.pcaScatterPlot(3, 4)
+    # data.pcaScatterPlot(3, 4)
 
 def brain_raman_depth():
     bg = spectrum.Acquisition(
         '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
 
     data = spectrum.Acquisition(
-        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateDOD6_good/').spectra()
-    data = spectrum.Acquisition(
-        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateDOD6_crap/').spectra()
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateEP6_good/').spectra()
+    # data = spectrum.Acquisition(
+    #     '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateDOD6_crap/').spectra()
 
     data.removeThermalNoise(bg)
-
+    data.smooth(n=3)
+    data.cut(400, 3025, WN=True)
     labels = []
     x = 0
     for i in range(len(data.spectra)):
         labels.append(x)
         x += 50
+
+    #find maximal integration index
+    max_val = 0
+    for i, spec in enumerate(data.spectra):
+        print(i, sum(spec.counts))
+        if sum(spec.counts) >= max_val:
+            max_val = sum(spec.counts)
+            focus_index = i
+
     data.changeLabel(labels)
-    data.smooth(n=3)
-    data.cut(400, 3025, WN=True)
-    # data.ORPL(min_bubble_widths=70)
+    data.ORPL(min_bubble_widths=70)
     data.normalizeIntegration()
-    data.pca()
-    data.pcaDisplay(1, 2)
-    data.pcaScatterPlot(1, 2)
-    # data.displaySOD()
+    # data.pca()
+    # data.pcaDisplay(1, 2)
+    # data.pcaScatterPlot(1, 2)
+    # data.displaySOD(focus_index=focus_index, save_fig='EP.png')
+    # data.displaySOD(focus_index=focus_index)
 
 
 def test_remove():
@@ -1210,28 +1262,68 @@ def test_remove():
     data.removeThermalNoise(bg)
     data.cut(400, 3025, WN=True)
     data.ORPL(min_bubble_widths=70)
-
     data.remove(1800, 2800, WN=True)
     data.shortenLabels()
     data.displayMeanSTD()
-
     data.pca()
-
     data.pcaDisplay(1, 2)
     data.pcaScatterPlot(1, 2)
-
     # acc = data.PCA_KNNIndividualLabel(return_accuracy=True, save_fig='veal_matrice.png')
     # print(acc)
 
 
+def testPicRatio():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
 
-test_remove()
+    data = []
+    # for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/data_seminaire/'):
+    #     if dir[0] == '.':
+    #         continue
+    #     data.append(
+    #         spectrum.Acquisition(
+    #             '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/data_seminaire/' + dir + '/').spectra())
+    # data = spectrum.Spectra(data)
+
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+
+
+
+    # data = spectrum.Acquisition(
+    #     '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateEP6_good/').spectra()
+    data.removeThermalNoise(bg)
+    data.cut(400, 3025, WN=True)
+    data.ORPL(min_bubble_widths=70)
+    # data.shortenLabels()
+    # data.displayMeanSTD()
+    # data.picRatio(l=[540, 560, 601, 616, 634, 695, 712, 737, 870, 921, 983, 996, 1056, 1081, 1124, 1169, 1265, 1294, 1435, 1450, 1550, 1600, 1657, 2722, 2850, 2882, 2932])
+    # data.picRatio(l=[616, 634, 695, 996, 1056, 1081, 1265, 1294, 1435, 1450, 1657, 2850, 2882, 2932]
+    # data.picRatio(l=[695, 996, 1056, 1081, 1265, 1294, 1435, 1450, 1657, 2932])
+    # data.picRatio(l=[695, 996, 1081, 1265, 1294, 1435, 1450, 1657])
+    data.picRatio(l=[996, 1081, 1265, 1294, 1435, 1450, 1657])
+
+    # data.PR_PCA_LDA(scatter=[1, 2])
+    # data.pca()
+    # data._getPCAdf()
+    acc = data.PR_KNNIndividualLabel(return_accuracy=True)
+    print(acc)
+    # data.PR_PCA_display(PC_scatter=[1, 2])
+    # data.display()
+
+# testPicRatio()
+# test_remove()
 # brain_raman_depth()
 # figures_singe()
 # figures_veau()
-# Memoire_array()
+Memoire_array(3)
 # just_displaying()
-
+#
 
 
 # test_R2_class()

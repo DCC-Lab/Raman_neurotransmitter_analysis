@@ -539,7 +539,8 @@ class Spectrum:
         self.integrationTime = integrationTime
         self.label = label
         self.annotation = annotation
-        self.PR = []
+        self.PR_vals = None
+        self.PR_names = None
 
         exist = 0 in self.wavelenghts
         if exist == False:
@@ -966,30 +967,42 @@ class Spectrum:
 
         self.counts = self.counts - z
 
-    def picRatio(self, l1, l2, n=3, WN=True):
+    def picRatio(self, l, n=3, WN=True, modify_object=True):
         # returns the ratio l1 / l2
         assert n % 2 == 1, "'n' must be an odd number"
         if WN == True:
-            WN = list(self.wavenumbers)
+            # get les intensités de chaque pique dans l
+            intensities = []
+            for i in l:
+                WN_list = list(self.wavenumbers)
+                ADF = lambda list_value: abs(list_value - i)
+                CV = min(WN_list, key=ADF)
+                WN_l = WN_list.index(CV)
+                I = 0
+                for i in range(n):
+                    I += self.counts[int(WN_l - ((n - 1) / 2) + i)] / n
+                intensities.append(I)
+            # get la liste de toutes les com possibles des elements de l
+            permu_indexes = list(itertools.permutations(range(len(l)), 2))
 
-            ADF_s = lambda list_value: abs(list_value - l1)
-            ADF_e = lambda list_value: abs(list_value - l2)
+            names_list = []
+            ratios_list = []
+            for i, pair in enumerate(permu_indexes):
+                names_list.append([l[pair[0]], l[pair[1]]])
+                ratios_list.append(intensities[pair[0]] / intensities[pair[1]])
+                # if intensities[pair[0]] >= intensities[pair[1]]:
+                #     names_list.append([l[pair[0]], l[pair[1]]])
+                #     ratios_list.append(intensities[pair[0]] / intensities[pair[1]])
+                # if intensities[pair[1]] >= intensities[pair[0]]:
+                #     names_list.append([l[pair[1]], l[pair[0]]])
+                #     ratios_list.append(intensities[pair[1]] / intensities[pair[0]])
+        if modify_object == True:
+            self.PR_vals = ratios_list
+            self.PR_names = names_list
+        return ratios_list, names_list
 
-            CV_s = min(WN, key=ADF_s)
-            CV_e = min(WN, key=ADF_e)
-
-            WN_l1 = WN.index(CV_s)
-            WN_l2 = WN.index(CV_e)
-
-            I_l1 = 0
-            I_l2 = 0
-            for i in range(n):
-                I_l1 += self.counts[int(WN_l1 - ((n - 1) / 2) + i)] / n
-                I_l2 += self.counts[int(WN_l2 - ((n - 1) / 2) + i)] / n
-
-            ratio = I_l1 / I_l2
-        self.PR.append(ratio)
-        return ratio
+    def norm_picRatio(self, mean_array):
+        self.PR_vals = np.divide(self.PR_vals, mean_array)
 
     def ORPL(self, min_bubble_widths=10, display=False):
         filtered, baseline = ORPL.bubblefill(np.array(self.counts), min_bubble_widths=min_bubble_widths)
@@ -1031,15 +1044,15 @@ class Spectra:
     def _loadData(self):
         self.data = []
         self.labelList = []
-        picRatioList = []
+        self.picRatioList = []
 
         for spectrum in self.spectra:
             spectrum_features = np.array(spectrum.counts)
             spectrum_label = spectrum.label
             self.data.append(spectrum_features)
             self.labelList.append(spectrum_label)
-            picRatioList.append(spectrum.PR)
-        self.picRatioList = list(np.array(picRatioList).T)
+            if type(spectrum.PR_vals) == list or type(spectrum.PR_vals) == np.ndarray:
+                self.picRatioList.append([spectrum.PR_vals, spectrum.PR_names])
 
     def removeLabel(self, label):
         label_index_list = []
@@ -1086,8 +1099,12 @@ class Spectra:
     def getLabelSpectra(self, label):
         spectra = []
         for spectrum in self.spectra:
-            if spectrum.label == label:
+            if type(label) == str and spectrum.label == label:
                 spectra.append(spectrum)
+            if type(label) == list:
+                for x in label:
+                    if spectrum.label == x:
+                        spectra.append(spectrum)
         return Spectra(spectra)
 
     def addAnnotation(self, annotation):
@@ -1278,22 +1295,32 @@ class Spectra:
         plt.show()
 
     # fonction très specifique (not good)
-    def displaySOD(self, label=True, WN=True):
+    def displaySOD(self, label=True, WN=True, figsize=(12, 6), save_fig=None, focus_index=None):
         palette = sns.color_palette("Blues", len(self.spectra))
 
         # Normaliser l'index de la courbe pour couvrir presque entièrement la plage de couleur
         max_index = len(self.spectra) - 1
         normalized_indices = np.linspace(0, max_index, len(self.spectra))
 
+        plt.figure(figsize=figsize)
         for i, spectrum in enumerate(self.spectra):
             couleur_pale = palette[int(normalized_indices[i])]
-            plt.plot(spectrum.wavenumbers, spectrum.counts,
-                     label=str(spectrum.label) + ', integration = ' + str(spectrum.integrationTime)[:5] + ' s', color=couleur_pale)
-            plt.xlabel('Wavenumbers [cm-1]')
+            if i != focus_index:
+                plt.plot(spectrum.wavelenghts, spectrum.counts,
+                         label=str(spectrum.label) + ' µm', color=couleur_pale)
+            if i == focus_index:
+                plt.plot(spectrum.wavelenghts, spectrum.counts,
+                         label=str(spectrum.label) + ' µm', color='red')
+            plt.xlabel('Longueurs d\'ondes [cm-1]')
 
-        plt.ylabel('Counts [-]')
+        plt.ylabel('UA [-]')
+
         if label == True:
             plt.legend()
+
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
+
         plt.show()
 
     #very specific fonction (not good)
@@ -1350,6 +1377,27 @@ class Spectra:
 
         self._loadData()
 
+    def R2_printer(self):
+        unique_labels = self._Unique(self.labelList)
+        global_mean = np.mean(self.data, axis=0)
+        R2 = []
+        R2_mean = []
+        for label in unique_labels:
+            label_spectra = []
+            all_R2 = []
+            for spectrum in self.spectra:
+                if spectrum.label == label:
+                    label_spectra.append(spectrum.counts)
+                    all_R2.append(sklearn.metrics.r2_score(global_mean, spectrum.counts))
+
+            label_mean = np.mean(label_spectra, axis=0)
+            label_R2 = sklearn.metrics.r2_score(global_mean, label_mean)
+            R2.append(label_R2)
+
+            R2_mean.append(np.mean(all_R2))
+
+        for i in range(len(unique_labels)):
+            print('{0} : R2 on mean spectrum: {1}, mean of R2\'s on each spectra: {2}'.format(unique_labels[i], np.round(R2[i], 3), np.round(R2_mean[i], 3)))
 
     @staticmethod
     def _Unique(liste):
@@ -2503,60 +2551,60 @@ class Spectra:
         if return_accuracy == True:
             return nb_of_good_pred / len(self.spectra)
 
-    def PR_KNNIndividualSpec(self, save=False, return_accuracy=False):
-        nb_of_good_pred = 0
-        prediction_list = []
-
-        for i in range(len(self.spectra)):
-            spectrum_to_classify = self.spectra[0]
-            spec_to_class_label = spectrum_to_classify.label
-
-            # Remove the spectrum to test from the training dataset
-            del self.spectra[0]
-            self._loadData()
-
-            # Create a label list that replace str with ints
-            int_label_list, label_dict = self._getLabelsAsInts(self.labelList)
-            label_str = list(label_dict.keys())
-            label_int = list(label_dict.values())
-            spec_to_class_label_as_int = label_str.index(spec_to_class_label)
-
-            spectrum_to_classify_in_RD_space = spectrum_to_classify.PR
-            data = np.array(self.picRatioList).T
-
-            # Make the KNN prediction for the train data
-            neigh = KNeighborsClassifier(n_neighbors=5)
-            neigh.fit(data, int_label_list)
-            pred = neigh.predict([spectrum_to_classify_in_RD_space])[0]
-            prediction_list.append(pred)
-            # Compute the accuracy
-            if int(pred) == int(spec_to_class_label_as_int) + 1:
-                nb_of_good_pred += 1
-
-            # Add back the spectrum removed at the begining
-            self.spectra.append(spectrum_to_classify)
-            self._loadData()
-
-        # Make the matrix to display nicely the results
-        label_dict = self._getLabelsAsInts(self.labelList)[1]
-        label_str = list(label_dict.keys())
-        label_int = list(label_dict.values())
-        prediction_list_str = self.int_to_strings(prediction_list, label_int, label_str)
-        print(nb_of_good_pred / len(self.spectra))
-        # label_str = ['Caudate', 'GPe', 'GPi', 'STN', 'SN', 'Putamen', 'WM', 'Thalamus']
-        mat = confusion_matrix(self.labelList, prediction_list_str, labels=label_str)
-        cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
-        sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
-
-        if save == True:
-            plt.savefig('/Users/antoinerousseau/Desktop/confusion_matrix.eps')
-        plt.show()
-
-        if return_accuracy == True:
-            return nb_of_good_pred / len(self.spectra)
+    # def PR_KNNIndividualSpec(self, save=False, return_accuracy=False):
+    #     nb_of_good_pred = 0
+    #     prediction_list = []
+    #
+    #     for i in range(len(self.spectra)):
+    #         spectrum_to_classify = self.spectra[0]
+    #         spec_to_class_label = spectrum_to_classify.label
+    #
+    #         # Remove the spectrum to test from the training dataset
+    #         del self.spectra[0]
+    #         self._loadData()
+    #
+    #         # Create a label list that replace str with ints
+    #         int_label_list, label_dict = self._getLabelsAsInts(self.labelList)
+    #         label_str = list(label_dict.keys())
+    #         label_int = list(label_dict.values())
+    #         spec_to_class_label_as_int = label_str.index(spec_to_class_label)
+    #
+    #         spectrum_to_classify_in_RD_space = spectrum_to_classify.PR
+    #         data = np.array(self.picRatioList).T
+    #
+    #         # Make the KNN prediction for the train data
+    #         neigh = KNeighborsClassifier(n_neighbors=5)
+    #         neigh.fit(data, int_label_list)
+    #         pred = neigh.predict([spectrum_to_classify_in_RD_space])[0]
+    #         prediction_list.append(pred)
+    #         # Compute the accuracy
+    #         if int(pred) == int(spec_to_class_label_as_int) + 1:
+    #             nb_of_good_pred += 1
+    #
+    #         # Add back the spectrum removed at the begining
+    #         self.spectra.append(spectrum_to_classify)
+    #         self._loadData()
+    #
+    #     # Make the matrix to display nicely the results
+    #     label_dict = self._getLabelsAsInts(self.labelList)[1]
+    #     label_str = list(label_dict.keys())
+    #     label_int = list(label_dict.values())
+    #     prediction_list_str = self.int_to_strings(prediction_list, label_int, label_str)
+    #     print(nb_of_good_pred / len(self.spectra))
+    #     # label_str = ['Caudate', 'GPe', 'GPi', 'STN', 'SN', 'Putamen', 'WM', 'Thalamus']
+    #     mat = confusion_matrix(self.labelList, prediction_list_str, labels=label_str)
+    #     cmn = np.round(mat.astype('float') * 100 / mat.sum(axis=1)[:, np.newaxis])
+    #     sns.heatmap(cmn, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+    #     # sns.heatmap(mat, annot=True, fmt='.0f', xticklabels=label_str, yticklabels=label_str)
+    #     plt.ylabel('True label')
+    #     plt.xlabel('Predicted label')
+    #
+    #     if save == True:
+    #         plt.savefig('/Users/antoinerousseau/Desktop/confusion_matrix.eps')
+    #     plt.show()
+    #
+    #     if return_accuracy == True:
+    #         return nb_of_good_pred / len(self.spectra)
 
     def PCA_KNNIndividualLabel(self, save_fig=None, return_accuracy=False, return_details=False, display=True, keep_single_label=False, nn=5):
         # TODO faire le save_fig pour les autres fonction similaires
@@ -2934,9 +2982,6 @@ class Spectra:
         int_label_list_init, label_dict_init = self._getLabelsAsInts(self.labelList)
         label_str_init = list(label_dict_init.keys())
         label_int_init = list(label_dict_init.values())
-        # print(len(label_str_init))
-        # print(label_str_init)
-
 
         for label in label_str_init:
 
@@ -2948,7 +2993,6 @@ class Spectra:
             int_label_list = list(int_label_list)
             label_str = list(label_dict.keys())
             label_int = list(label_dict.values())
-            # print(int_label_list)
 
             # flip la liste pour que le "pop" fonctionne comme il se doit
             label_indexes.sort(reverse=True)
@@ -2963,13 +3007,19 @@ class Spectra:
             # prepare the data in the PR 'space' for KNN
             spectra_to_classify_in_PR_space = []
             for spectrum in test_spectra:
-                spectrum_to_classify_in_PR_space = spectrum.PR
+                # print(spectrum.PR_vals)
+                spectrum_to_classify_in_PR_space = spectrum.PR_vals
                 spectra_to_classify_in_PR_space.append(spectrum_to_classify_in_PR_space)
             self._getPRdf()
             data = self.PR_df.to_numpy()
+            train_data = []
+            for i in data.T[0]:
+                train_data.append(i)
+
             # Make the KNN prediction for the train data
             neigh = KNeighborsClassifier(n_neighbors=nn)
-            neigh.fit(data, int_label_list)
+            # neigh.fit(data.T[0], int_label_list)
+            neigh.fit(train_data, int_label_list)
             k = 0
             for spectrum in spectra_to_classify_in_PR_space:
                 true_label = test_spectra[k].label
@@ -3054,6 +3104,166 @@ class Spectra:
                 max_str_list.append(max_str)
             return tot_accuracy, accuracy_per_label, max_val_list, max_str_list, label_str, mat
 
+    def PR_PCA_display(self, PC_display=None, PC_scatter=None):
+        self._loadData()
+        self._getPRdf()
+        data = self.PR_df.to_numpy()
+        train_data = []
+        data_x = []
+        data_labels = []
+        for i in data.T[0]:
+            train_data.append(i)
+        for i in data.T[2]:
+            data_x.append(i)
+        for i in data.T[1]:
+            data_labels.append(i)
+
+        columns = []
+        for i in range(10):
+            columns.append('PC{0}'.format(i + 1))
+
+        PR_PCA = PCA(n_components=10)
+        PR_PCA.fit(train_data)
+
+        SV = []
+        EVR = []
+        PC = []
+        PC_label = []
+        for i in range(10):
+            SV.append(PR_PCA.singular_values_[i])
+            EVR.append(PR_PCA.explained_variance_ratio_[i])
+            PC.append(PR_PCA.components_[i])
+            PC_label.append('PC{0}, val propre = {1}'.format(i + 1, round(PR_PCA.explained_variance_ratio_[i], 2)))
+
+        # display PCs
+        labels = self._Unique(self.labelList)
+
+        color_list = ['black', 'red', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
+                      '#44AA99', '#DDCC77', '#805E2B', 'yellow']
+        if len(labels) >= len(color_list):
+            color_list = ["#" + ''.join([random.choice('0123456789ABCDEF') for i in range(6)]) for j in
+                          range(len(labels))]
+        if PC_display != None:
+            # plt.figure(figsize=figsize)
+            fig, ax = plt.subplots()
+            for i, PComp in enumerate(PC_display):
+                ax.scatter(range(len(data_x[0])), PC[PComp - 1], label=PC_label[PComp - 1],
+                         color=color_list[i], marker='o')
+
+            ax.legend()
+            plt.xlabel('Intensity ratios')
+            plt.show()
+
+        # Coefficient Scatter plot
+        if PC_scatter != None:
+            pca_data = PR_PCA.fit_transform(train_data)
+            df = pd.DataFrame(pca_data, index=data_labels, columns=columns)
+
+            if len(PC_scatter) == 1:
+                fig = px.scatter(df, x='PC{0}'.format(PC_scatter[0]), color=data_labels,
+                                 color_discrete_sequence=color_list)
+
+            if len(PC_scatter) == 2:
+                fig = px.scatter(df, x='PC{0}'.format(PC_scatter[0]), y='PC{0}'.format(PC_scatter[1]), color=data_labels,
+                                 color_discrete_sequence=color_list)
+            plot(fig)
+
+    def PR_PCA_LDA(self, display=True, scatter=None):
+        # I dont really understand the n_component stuff going on
+        self._loadData()
+
+        assert len(self.picRatioList) == len(self.labelList), "'data' and 'label' arrays must be the same lenght"
+
+        # nb_class = len(list(set(self.labelList)))
+        # LDA = LinearDiscriminantAnalysis(n_components=nb_class - 1)
+        LDA = LinearDiscriminantAnalysis()
+
+        data = []
+        for arr in self.picRatioList:
+            data.append(arr[0])
+        lda_data = LDA.fit_transform(data, self.labelList)
+
+        # ____________________________
+        lda = LinearDiscriminantAnalysis()
+        lda.fit(data, self.labelList)
+
+        # Obtenez les composantes LDA
+        composantes_lda = lda.scalings_
+
+        # Visualisation des composantes LDA
+        plt.figure(figsize=(8, 6))
+        for i in range(composantes_lda.shape[1]):
+            plt.arrow(0, 0, composantes_lda[:, i][0], composantes_lda[:, i][1],
+                      head_width=0.05, head_length=0.1, fc='blue', ec='blue')
+            plt.text(composantes_lda[:, i][0], composantes_lda[:, i][1], f'Composante {i + 1}')
+        plt.xlabel('Caractéristique 1')
+        plt.ylabel('Caractéristique 2')
+        plt.title('Composantes LDA')
+        plt.grid(True)
+        plt.show()
+
+        # Obtenez les coefficients des vecteurs discriminants
+        coefs = lda.coef_
+
+        # Calculez l'importance globale pour chaque caractéristique (somme des coefficients)
+        importance = np.sum(np.abs(coefs), axis=0)
+
+        # Triez les caractéristiques par ordre d'importance décroissante
+        sorted_indices = np.argsort(importance)[::-1]
+        sorted_importance = importance[sorted_indices]
+
+        features = []
+        for x_val in self.picRatioList[0][1]:
+            features.append(x_val)
+        features = np.array(features)
+        sorted_features = features[sorted_indices]  # Remplacez "features" par votre tableau de noms de caractéristiques
+
+        # Créez la visualisation
+        plt.figure(figsize=(8, 6))
+        plt.bar(range(len(sorted_importance)), sorted_importance)
+        plt.xticks(range(len(sorted_importance)), sorted_features, rotation=90)
+        plt.xlabel('Caractéristiques')
+        plt.ylabel('Importance')
+        plt.title('Importance des caractéristiques dans la séparation des données')
+        plt.tight_layout()
+        plt.show()
+        # _______________________
+        #Get x axis right
+        x_axis = []
+        for feature in features:
+            x_axis.append(str(feature))
+
+        if display == True:
+            fig, ax = plt.subplots()
+            for i in range(len(LDA.coef_)):
+                if i >= 4:
+                    continue
+                ax.scatter(x_axis, abs(LDA.coef_[i]), label='LD{0}'.format(i + 1))
+            plt.xlabel('Ratios [-]')
+            plt.legend()
+            plt.show()
+
+        # Scatter plot ------------------------------------------
+        labels = []
+        columns = []
+        lda_data_T = lda_data.T
+
+        for spectrum in self.spectra:
+            labels.append(spectrum.label)
+
+        for LD in range(len(lda_data_T)):
+            columns.append('LD{0}'.format(LD + 1))
+
+        lda_df = pd.DataFrame(lda_data, index=labels, columns=columns)
+
+        if len(scatter) == 1:
+            fig = px.scatter(lda_df, x='LD{0}'.format(scatter[0]), color=labels)
+
+        if len(scatter) == 2:
+            fig = px.scatter(lda_df, x='LD{0}'.format(scatter[0]), y='LD{0}'.format(scatter[1]), color=labels)
+
+        plot(fig)
+
     @staticmethod
     def int_to_strings(int_array, item_array, label_array):
         # Create an empty dictionary to store the mapping of integers to labels
@@ -3109,23 +3319,45 @@ class Spectra:
         self.spectra = new_spectra_list
         self._loadData()
 
-    def picRatio(self, l1, l2, n=3, WN=True):
+    def picRatio(self, l, n=3, WN=True, normalize=True):
         picRatioList = []
         for spectrum in self.spectra:
-            picRatioList.append(spectrum.picRatio(l1=l1, l2=l2, n=n, WN=WN))
-        self.picRatioList.append(picRatioList)
+            picRatioList.append(spectrum.picRatio(l=l, n=n, WN=WN)[0])
+
+        if normalize == True:
+            trans = np.array(picRatioList).T
+            mean_array = []
+            for ratio in trans:
+                mean_array.append(np.mean(ratio))
+
+            for spectrum in self.spectra:
+                spectrum.norm_picRatio(mean_array=mean_array)
+
+        self._loadData()
 
     def _getPRdf(self):
-        PR_data = list(np.array(self.picRatioList).T)
+        PR_data = list(np.array(self.picRatioList, dtype=object).T)
+        # print(self.picRatioList)
+
         self.PRlabels = []
-        self.PRcolumns = []
-
-        for spectrum in self.spectra:
+        # self.PRcolumns = []
+        ratios = []
+        combinations = []
+        for i, spectrum in enumerate(self.spectra):
             self.PRlabels.append(spectrum.label)
+            ratios.append(spectrum.PR_vals)
+            combinations.append(spectrum.PR_names)
+            # print(spectrum.PR_vals, spectrum.PR_names)
 
-        for PR in range(len(self.picRatioList)):
-            self.PRcolumns.append('PR{0}'.format(PR + 1))
-        self.PR_df = pd.DataFrame(PR_data, index=self.PRlabels, columns=self.PRcolumns)
+        self.PR_df = pd.DataFrame({'ratios': ratios,
+                                   'labels': self.PRlabels,
+                                   'combinations': combinations
+                                   })
+
+        # print(self.PR_df)
+        # for PR in range(len(self.picRatioList[0][0])):
+        #     self.PRcolumns.append('PR{0}'.format(PR + 1))
+        # self.PR_df = pd.DataFrame(PR_data, index=self.PRlabels, columns=self.PRcolumns)
 
     def PRScatterPlot(self, PRx, PRy=None, PRz=None, AnnotationToDisplay=None, show_annotations=False):
         self._loadData()

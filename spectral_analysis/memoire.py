@@ -116,8 +116,7 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
 
                                 for C_1 in C1:
 # -------------------------------------------------
-#                                     for WN_region in [1, 2, 3, 4]:
-                                    for WN_region in [4]:
+                                    for WN_region in [1, 2, 3, 4]:
                                         parameters = (
                                         FDRC_array, [p_1, p_2], [f_1, f_2], [DR_1, DR_2, DR_3], [C_1], WN_region, normalize)
                                         all_parameters.append(parameters)
@@ -256,12 +255,12 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
     # 2 : Prob --> cluster_array : None
 
     data = []
-    for dir in os.listdir('brain_data/'):
+    for dir in os.listdir('clean_brain_data/'):
         if dir[0] == '.':
             continue
         data.append(
             spectrum.Acquisition(
-                'brain_data/' + dir + '/').spectra())
+                'clean_brain_data/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
     data.removeThermalNoise(bg)
     data.CRRemoval()
@@ -342,41 +341,41 @@ def iterate_trough_permutations():
     filter = [0, 1, 2]
     # filter = [2]
     # DR = [0, 1, 2, 3, 4]
-    DR = [0, 1, 4]
-    cluster = [0, 1, 2]
-    # cluster = [0, 1]
+    DR = [0, 1]
+    # cluster = [0, 1, 2]
+    cluster = [0, 1]
     tracking_number = 0
 
     for p in pre:
         if p == 0:
-            p_array = [3, 7, 11]
+            p_array = [3, 5]
             # p_array = [5]
         if p == 1:
-            p_array = [[5, 10, 20], [2]]
+            p_array = [[3, 5, 8], [2]]
             # p_array = [[9], [3]]
 
         for f in filter:
             if f == 0:
                 # f_array = [[0.1, 10, 1000], [0.00001, 0.0001]]
-                f_array = [[1, 100], [0.00001, 0.0001]]
+                f_array = [[100, 1000], [0.0001, 0.001]]
                 # f_array = [[10], [0.001]]
             if f == 1:
                 # f_array = [[5, 10, 20], [3]]
-                f_array = [[5, 8], [3]]
-                # f_array = [[10], [3]]
+                f_array = [[5, 7, 9], [3]]
+                # f_array = [[10]   , [3]]
             if f == 2:
                 # f_array = [20, 50, 100, 200]
-                f_array = [30, 70, 150]
+                f_array = [55, 70, 85]
                 # f_array = [40]
 
             for d in DR:
                 if d == 0:
                     # d_array = [1, 2, 3, 5, 10]
-                    d_array = [1, 3, 8]
+                    d_array = [3, 5, 8]
                     # d_array = [5]
                 if d == 1:
                     # d_array = [[2, 5], [5, 10, 30], [0.05, 0.5]]
-                    d_array = [[2, 5], [8, 15], [0.1]]
+                    d_array = [[2, 3, 5], [8, 10], [0.1]]
                     # d_array = [[4], [15], [0.5]]
 
                 # if d == 2:
@@ -391,7 +390,7 @@ def iterate_trough_permutations():
 
                 for c in cluster:
                     if c == 0:
-                        c_array = [5, 10, 30]
+                        c_array = [5, 10, 20]
                         # c_array = [8]
                     if c == 1:
                         c_array = [1]
@@ -413,6 +412,6 @@ def iterate_trough_permutations():
 if __name__ == '__main__':
     iterate_trough_permutations()
 # main.to_csv('Memoire_df.csv   ', index=False)
-main_df.to_csv('Memoire_df_3.csv', index=False)
+main_df.to_csv('Memoire_df_4.csv', index=False)
 
 # print(main)
