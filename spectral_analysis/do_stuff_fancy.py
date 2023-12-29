@@ -1321,7 +1321,7 @@ def testPicRatio():
 # brain_raman_depth()
 # figures_singe()
 # figures_veau()
-Memoire_array(3)
+Memoire_array(6)
 # just_displaying()
 #
 

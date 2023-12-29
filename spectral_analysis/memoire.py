@@ -61,6 +61,9 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
         pre = 'savgol({0}, {1})'
         p1 = pre_array[0]
         p2 = pre_array[1]
+    if FDRC_array[0] == 2:
+        pre = "rien"
+        p1 = pre_array
 
     if FDRC_array[1] == 0:
         filter = 'ALS({0}, {1})'
@@ -236,6 +239,7 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
     # FDRC_array[0]:
     # 0 : smooth --> pre_array : 1d array
     # 1 : savgol --> pre_array : 2d array
+    # 2 : rien
     # ----------------------
     # FDRC_array[1]:
     # 0 : ALS --> filter_array : 2d array
@@ -337,7 +341,7 @@ def compute_combo(FDRC_array, p_param, f_param, DR_param, c_param, k, normalize=
 # best_anal([0, 0, 0, 0], [5, 7], [[1000, 10000], [0.01, 0.1, 1]], [3, 5, 7], [5, 10])
 
 def iterate_trough_permutations():
-    pre = [0, 1]
+    pre = [0, 1, 2]
     filter = [0, 1, 2]
     # filter = [2]
     # DR = [0, 1, 2, 3, 4]
@@ -353,6 +357,8 @@ def iterate_trough_permutations():
         if p == 1:
             p_array = [[3, 5, 8], [2]]
             # p_array = [[9], [3]]
+        if p == 2:
+            p_array = [0]
 
         for f in filter:
             if f == 0:
