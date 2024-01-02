@@ -33,8 +33,15 @@ import scipy.stats as stats
 import ORPL
 import LabPCA
 from warnings import simplefilter
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+import warnings
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
 # ignore all future warnings
 simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 
 
@@ -982,8 +989,8 @@ class Spectrum:
                 for i in range(n):
                     I += self.counts[int(WN_l - ((n - 1) / 2) + i)] / n
                 intensities.append(I)
-            # get la liste de toutes les com possibles des elements de l
-            permu_indexes = list(itertools.permutations(range(len(l)), 2))
+            # get la liste de toutes les combinaisons possibles des elements de l
+            permu_indexes = list(itertools.combinations(range(len(l)), 2))
 
             names_list = []
             ratios_list = []
@@ -1407,7 +1414,7 @@ class Spectra:
                 unique_list.append(elem)
         return unique_list
 
-    def displayMeanSTD(self, WN=True, display_label=True, save_fig=None, figsize=(12, 6)):
+    def displayMeanSTD(self, WN=True, display_label=True, save_fig=None, figsize=(12, 6), STD=True):
         labels = self._Unique(self.labelList)
         color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
@@ -1448,15 +1455,17 @@ class Spectra:
         if WN == False:
             for i in range(len(labels)):
                 plt.plot(WL_values[i], data_means[i], color=color_list[i])
-                plt.fill_between(WL_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
-                                 color=color_list[i], alpha=0.5)
+                if STD == True:
+                    plt.fill_between(WL_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
+                                     color=color_list[i], alpha=0.5)
             plt.xlabel('Wavelengths [nm]')
 
         if WN == True:
             for i in range(len(labels)):
                 plt.plot(WN_values[i], data_means[i], color=color_list[i])
-                plt.fill_between(WN_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
-                                 color=color_list[i], alpha=0.5)
+                if STD == True:
+                    plt.fill_between(WN_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
+                                     color=color_list[i], alpha=0.5)
             plt.xlabel('Wavenumbers [cm-1]')
         plt.ylabel('Counts [-]')
 
@@ -1750,7 +1759,7 @@ class Spectra:
         # print(np.shape(pca_data))
         self.tsne_df = pd.DataFrame(tsne_data, index=self.TSNElabels, columns=self.TSNEcolumns)
 
-    def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False, save_fig=None):
+    def pcaScatterPlot(self, PCx, PCy=None, PCz=None, AnnotationToDisplay=None, show_annotations=False, save_fig=None, x_axis_range=None, y_axis_range=None):
         labels = self._Unique(self.labelList)
         color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
@@ -1847,14 +1856,21 @@ class Spectra:
                                         color=temp_PCAlabels, text=temp_annotations, color_discrete_sequence=color_list)
                     print('ok')
 
+        # do axis ranges comme y faut
+        if x_axis_range != None:
+            fig.update_xaxes(range=x_axis_range)
+        if y_axis_range != None:
+            fig.update_yaxes(range=y_axis_range)
+
         if save_fig != None:
             fig.update_xaxes(showgrid=False, zeroline=False)
+            fig.update_yaxes(showgrid=False, zeroline=False)
             fig.update_layout(margin=go.layout.Margin(
                 l=0,  # left margin
                 r=0,  # right margin
                 b=0,  # bottom margin
                 t=0  # top margin
-            ))
+            ), xaxis = dict(tickvals=[0]), yaxis = dict(tickvals=[0]))
             fig.write_image(save_fig, scale=3)
         plot(fig)
 
@@ -1918,11 +1934,11 @@ class Spectra:
         # self.LDA = LinearDiscriminantAnalysis(n_components=n_components)
         self.LDA = LinearDiscriminantAnalysis(n_components=nb_class-1)
         self.lda_data = self.LDA.fit_transform(self.data, self.labelList)
-        print('New dimension space : ', np.shape(self.lda_data))
-        print('Scaling? : ', np.shape(self.LDA.scalings_))
-        print('shape coef_ : ', np.shape(self.LDA.coef_))
-        print('np.of labels', list(set(self.labelList)))
-        print('nb de comp : ', self.LDA.n_components)
+        # print('New dimension space : ', np.shape(self.lda_data))
+        # print('Scaling? : ', np.shape(self.LDA.scalings_))
+        # print('shape coef_ : ', np.shape(self.LDA.coef_))
+        # print('np.of labels', list(set(self.labelList)))
+        # print('nb de comp : ', self.LDA.n_components)
 
 #____________________________
         lda = LinearDiscriminantAnalysis()
@@ -1954,8 +1970,8 @@ class Spectra:
         sorted_importance = importance[sorted_indices]
 
         features = []
-        for WN in self.spectra[0].wavenumbers:
-            features.append(round(WN))
+        for WNs in self.spectra[0].wavenumbers:
+            features.append(round(WNs))
         features = np.array(features)
         sorted_features = features[sorted_indices]  # Remplacez "features" par votre tableau de noms de caractéristiques
 
@@ -1969,16 +1985,20 @@ class Spectra:
         plt.tight_layout()
         plt.show()
 # _______________________
-        if display == True:
-            if WN ==False:
+        if display != False:
+            if WN == False:
                 for i in range(len(self.LDA.coef_)):
                     plt.plot(self.spectra[0].wavelenghts, abs(self.LDA.coef_[i]), label='LD{0}'.format(i + 1))
                 plt.xlabel('Wavelengths [nm]')
             if WN == True:
-                for i in range(len(self.LDA.coef_)):
-                    plt.plot(self.spectra[0].wavenumbers, abs(self.LDA.coef_[i]), label='LD{0}'.format(i + 1))
-                    # plt.plot(self.spectra[0].wavenumbers, self.LDA.scalings_.T[i], label='Scaling{0}'.format(i + 1))
-                    # plt.plot(self.spectra[0].wavenumbers, (LDA_comp.coef_[i]), label='LD{0}'.format(i + 1))
+                if display == True:
+                    for i in range(len(self.LDA.coef_)):
+                        plt.plot(self.spectra[0].wavenumbers, abs(self.LDA.coef_[i]), label='LD{0}'.format(i + 1))
+                        # plt.plot(self.spectra[0].wavenumbers, self.LDA.scalings_.T[i], label='Scaling{0}'.format(i + 1))
+                        # plt.plot(self.spectra[0].wavenumbers, (LDA_comp.coef_[i]), label='LD{0}'.format(i + 1))
+                if type(display) == list:
+                    for i in display:
+                        plt.plot(self.spectra[0].wavenumbers, abs(self.LDA.coef_[i]), label='LD{0}'.format(i + 1))
                 plt.xlabel('Wavenumbers [cm-1]')
             plt.legend()
             plt.show()
@@ -3171,7 +3191,7 @@ class Spectra:
     def PR_PCA_LDA(self, display=True, scatter=None):
         # I dont really understand the n_component stuff going on
         self._loadData()
-
+        print(len(self.picRatioList), len(self.labelList))
         assert len(self.picRatioList) == len(self.labelList), "'data' and 'label' arrays must be the same lenght"
 
         # nb_class = len(list(set(self.labelList)))
@@ -3848,38 +3868,50 @@ class Spectra:
 
         plot(fig)
 
-    def tile(self, x, y, WN_to_display, n=3, WN=True):
+    def tile(self, x, y, WN_to_display, n=3, WN=True, title=None, save_fig=None):
         # TODO test si je cut avant de tile si ca change de WN_index
         assert x * y == len(self.spectra), 'The shape given (x * y) does not fit the amount of spectra in that Spectra object'
 
         if WN == True:
             WN = list(self.spectra[0].wavenumbers)
 
-            ADF = lambda list_value: abs(list_value - WN_to_display)
-
-            CV = min(WN, key=ADF)
-
-            data_index = WN.index(CV)
+            data_indexes = []
+            for WN_ in WN_to_display:
+                ADF = lambda list_value: abs(list_value - WN_)
+                CV = min(WN, key=ADF)
+                data_indexes.append(WN.index(CV))
 
         data = []
         for spectrum in self.spectra:
-            value = 0
+            value1 = 0
+            value2 = 0
             for i in range(n):
-                value += spectrum.counts[int(data_index - ((n - 1) / 2) + i)] / n
+                value1 += spectrum.counts[int(data_indexes[0] - ((n - 1) / 2) + i)] / n
+                value2 += spectrum.counts[int(data_indexes[1] - ((n - 1) / 2) + i)] / n
 
             # data.append(spectrum.counts[data_index])
-            data.append(value)
-        print('RAW : ', data)
+            data.append(value1 / value2)
+
+        # print('RAW : ', data)
         data = np.reshape(data, (y, x))
-        print('Reshaped : ', data)
+        # print('Reshaped : ', data)
 
         for i in range(len(data)):
             if (i % 2) == 1:
                 data[i] = data[i][::-1]
-        print('flipped : ', data)
+        # print('flipped : ', data)
 
-        plt.imshow(data)
-        plt.title('{} cm-1'.format(WN_to_display))
+        im = plt.imshow(data, cmap='gray')
+        plt.axis(False)
+        plt.title(title)
+        if title == None:
+            plt.title('{0} cm-1 / {1} cm-1'.format(WN_to_display[0], WN_to_display[1]))
+        ax = plt.gca()
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size=0.20, pad=0.1)
+        plt.colorbar(im, cax=cax).set_label('ratio {0} / {1} cm-1'.format(WN_to_display[0], WN_to_display[1]))
+        if save_fig != None:
+            plt.savefig(save_fig, dpi=600, bbox_inches='tight')
         plt.show()
 
 

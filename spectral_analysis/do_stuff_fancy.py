@@ -12,6 +12,7 @@ from sklearn.metrics import confusion_matrix
 import io
 from scipy.stats import norm
 import matplotlib.patches as mpatches
+import itertools
 
 
 
@@ -47,7 +48,6 @@ def BarCode(Section, length, TW, TM, TG):
     GL_TRUTH = np.where(GL_TRUTH == '3.0', 'GREY', GL_TRUTH)
 
     return GL_TRUTH
-
 
 def PCADeapoliLiveMonkeyDataSTNr():
     STNr = spectrum.Acquisition('/Users/antoinerousseau/Desktop/ddpaoli/20161103_InVivoMonkeySurgery/RSTN_labelfixed/', fileType='Depaoli').spectra()
@@ -105,7 +105,6 @@ def PCADeapoliLiveMonkeyDataSTNl():
     # STNl.pcaDisplay(1, 2)
     # STNl.pcaDisplay(3, 4)
 
-
 def PCADeapoliLiveMonkeyDataGPIl():
     GPIl = spectrum.Acquisition('/Users/antoinerousseau/Desktop/ddpaoli/20161103_InVivoMonkeySurgery/20161103_MERProbe_GPiLeftHem/', fileType='Depaoli').spectra()
     GPIl_label = BarCode('/Users/antoinerousseau/Downloads/2016-DRS-GPeleft(GPi)-MonkeyBrain-barcodeGWM.csv', len(GPIl.spectra), 250, 70, 40)
@@ -125,7 +124,6 @@ def PCADeapoliLiveMonkeyDataGPIl():
     # GPIl.pcaScatterPlot(5, 6)
     GPIl.pcaDisplay(1, 2, 3)
     # GPIl.pcaDisplay(4, 5)
-
 
 def PCAOnAllMonkeyData():
     WR = spectrum.Acquisition('/Users/antoinerousseau/Desktop/ddpaoli/20161128_ProbeCharacterization/WR/', fileType='Depaoli').spectraSum()
@@ -162,7 +160,6 @@ def PCAOnAllMonkeyData():
     # data.pcaScatterPlot(1, 3)
     # data.pcaDisplay(1, 2, 3)
     # data.pcaDisplay(4, 5)
-
 
 def getMyBloodAbsorption():
     blood = spectrum.Acquisition('/Users/antoinerousseau/Downloads/DRS_006/AntoineBLOOD/blood/',
@@ -311,8 +308,6 @@ def LabDRS():
     data.pcaDisplay(1, 2, 3)
     data.pcaDisplay(4, 5, 6)
 
-
-
 def shavDataRaw():
     db = SpectraDB(databaseURL="mysql+ssh://dcclab@cafeine3.crulrg.ulaval.ca:cafeine3.crulrg.ulaval.ca/dcclab@labdata")
     db.describeDatasets()
@@ -415,11 +410,6 @@ def shavDataRaw():
     # data.plotPCOnBarCode(6)
     # data.plotPCOnBarCode(7)
 
-
-
-
-
-
 def RMLensesOptimisation():
     data = []
     for dir in os.listdir('/Users/antoinerousseau/Desktop/20220921/'):
@@ -465,7 +455,6 @@ def SheepBrainRaman():
     # data.pcaDisplay(4, 5, 6)
     # data.pcaDisplay(7)
 
-
 def ScaleWhiteRef():
     spec = []
     for i in range(100):
@@ -481,7 +470,6 @@ def ScaleWhiteRef():
     data.add(mean_spec)
     data.pca()
     data.pcaDisplay(1)
-
 
 def VealBrain():
     bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220929/morning_verif/darknoise/').spectraSum()
@@ -514,7 +502,6 @@ def VealBrain():
     data.pcaDisplay(4, 5, 6)
     data.ldaScatterPlot(1)
 
-
 def ElaheData():
     bg = spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220929/morning_verif/darknoise/').spectraSum()
     data = []
@@ -535,7 +522,6 @@ def ElaheData():
     # data.pcaScatterPlot(3, 4)
 
     # data.pcaDisplay(1, 2, 3)
-
 
 def testALSbrain():
     bg = spectrum.Acquisition(
@@ -561,7 +547,6 @@ def testALSbrain():
             rand_spec_index = random.randint(0, len(data.spectra) - 1)
             data.spectra[rand_spec_index].ALS(lam=i, p=j, display=True)
             data.spectra[rand_spec_index].display()
-
 
 def testBWbrain():
     bg = spectrum.Acquisition(
@@ -675,7 +660,6 @@ def test_R2_class():
     # data.R2_classifier()
     data.prob_classifier()
 
-
 def test_plt_cancel():
     x = [0, 1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5, 6]
@@ -733,7 +717,6 @@ def test_KNN_returns():
 # testALSbrain()
 # test_R2_class()
 # test_plt_cancel()
-
 
 def test_Memoire_array():
     anal_data = pd.read_csv('Memoire_df.csv')
@@ -816,7 +799,6 @@ def test_Memoire_array():
         matrice.append(real_mat)
 
     print(matrice)
-
 
 def Memoire_array(param_to_eval):
     anal_data = pd.read_csv('Memoire_df_1.csv')
@@ -943,7 +925,8 @@ def Memoire_array(param_to_eval):
 
 
     top = range(len(params))
-    top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1000:]
+    # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1000:]
+    top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-100:]
     # top = sorted(range(len(AccDiff)), key=lambda i: AccDiff[i])[-1000:]
     # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-1:]
     # top = sorted(range(len(totacc)), key=lambda i: totacc[i])[-10:]
@@ -998,17 +981,10 @@ def Memoire_array(param_to_eval):
         small_array = [mean, std]
         mean_std_array.append(small_array)
 
-
-    print(data_df)
-    # Iterate through the parameters
-    # for i in range(len(data)):
+    # print(data_df)
     data_df.plot.kde()
-    handles = [mpatches.Patch(label='ok'), mpatches.Patch(label='dude')]
     # Plot formatting
 
-
-
-    # print(top)
     x = np.arange(0, 0.5, 0.001)
     plt.xlabel('Accuracy')
     plt.ylabel('Frequency')
@@ -1021,18 +997,6 @@ def Memoire_array(param_to_eval):
     plt.legend(legend)
     # plt.legend()
     plt.show()
-    # plt.plot(x, norm.pdf(x, mean_std_array[6][0], mean_std_array[6][1]), label=unique_params[6] + ', {0}'.format(len(data[6])))
-    # plt.legend()
-    # plt.show()
-    # plt.plot(x, norm.pdf(x, mean_std_array[7][0], mean_std_array[7][1]), label=unique_params[7] + ', {0}'.format(len(data[7])))
-    # plt.plot(x, norm.pdf(x, mean_std_array[8][0], mean_std_array[8][1]), label=unique_params[8] + ', {0}'.format(len(data[8])))
-    # plt.plot(x, norm.pdf(x, mean_std_array[9][0], mean_std_array[9][1]), label=unique_params[9] + ', {0}'.format(len(data[9])))
-    # plt.legend()
-    # plt.show()
-    # plt.plot(x, norm.pdf(x, mean_std_array[10][0], mean_std_array[10][1]), label=unique_params[10] + ', {0}'.format(len(data[10])))
-    # plt.plot(x, norm.pdf(x, mean_std_array[11][0], mean_std_array[11][1]), label=unique_params[11] + ', {0}'.format(len(data[11])))
-    # plt.legend()
-    # plt.show()
 
 def just_displaying():
     bg = spectrum.Acquisition(
@@ -1068,30 +1032,30 @@ def just_displaying():
     GPe = data.getLabelSpectra(['GPe5_1_l', 'GPe3_f', 'GPe2_f', 'GPe2'])
     WM = data.getLabelSpectra(['WM7_2_f', 'WM7_1_f', 'WM5_1_l'])
 
-    putamen.R2_printer()
-    putamen.displayMeanSTD()
+    # putamen.R2_printer()
+    # putamen.displayMeanSTD()
 
     thalamus.R2_printer()
     thalamus.displayMeanSTD()
 
-    caudate.R2_printer()
-    caudate.displayMeanSTD()
-
-    SN.R2_printer()
-    SN.displayMeanSTD()
-
-    STN.R2_printer()
-    STN.displayMeanSTD()
-
-    GPi.R2_printer()
-    GPi.displayMeanSTD()
-
-    GPe.R2_printer()
-    GPe.displayMeanSTD()
-
-    WM.R2_printer()
-    WM.displayMeanSTD()
-
+    # caudate.R2_printer()
+    # caudate.displayMeanSTD()
+    #
+    # SN.R2_printer()
+    # SN.displayMeanSTD()
+    #
+    # STN.R2_printer()
+    # STN.displayMeanSTD()
+    #
+    # GPi.R2_printer()
+    # GPi.displayMeanSTD()
+    #
+    # GPe.R2_printer()
+    # GPe.displayMeanSTD()
+    #
+    # WM.R2_printer()
+    # WM.displayMeanSTD()
+    #
     # data.cut(2810, 3020, WN=True)
     # data.normalizeIntegration()
     # data.pca(nbOfComp=8)
@@ -1211,6 +1175,53 @@ def figures_veau():
     data.pcaScatterPlot(1, 2, save_fig='veal_scatter.png')
     # data.pcaScatterPlot(3, 4)
 
+def figures_hanu():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    dod = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateEP6_good/').spectra()
+    # data.add(dod)
+    data.removeThermalNoise(bg)
+    # data.CRRemoval()
+    data.savgolFilter(5, 2)
+    # data.cut(200, None, WN=True)
+    data.normalizeIntegration()
+    data.butterworthFilter(8, 3)
+    data.cut(400, 3020, WN=True)
+
+    # data.displayMeanSTD()
+    # data.remove(1800, 2810, WN=True)
+    # data.shortenLabels()
+    # data.displayMeanSTD(STD=False)
+    data.pca(nbOfComp=8)
+    acc = data.PCA_KNNIndividualLabel(nn=5, return_accuracy=True, save_fig='hanu_matrice.png')
+    # print(acc) # 0.4215
+    # normaliser avant BW --> 0.8 % meilleur acc = 0.4297
+
+    # data.lda(display=[1, 2, 3])
+    # data.ldaScatterPlot(1, 2)
+    # data.ldaScatterPlot(3, 4)
+
+    # data.pcaDisplay(1, 2, save_fig='hanu_PC12.png')
+    # data.pcaDisplay(1, 2)
+    # data.pcaDisplay(3, 4)
+    # data.pcaDisplay(5, 6)
+
+    # data.pcaScatterPlot(1, 2, save_fig='hanu_scatter12.png', x_axis_range=[-0.0005, 0.0017], y_axis_range=[-250e-6, 200e-6])
+    #
+    # data.pcaScatterPlot(3, 4, save_fig='hanu_scatter34.png', x_axis_range=[-400e-6, 350e-6], y_axis_range=[-200e-6, 320e-6])
+    #
+    # data.pcaScatterPlot(5, 6, save_fig='hanu_scatter56.png')
+
 def brain_raman_depth():
     bg = spectrum.Acquisition(
         '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
@@ -1221,8 +1232,8 @@ def brain_raman_depth():
     #     '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateDOD6_crap/').spectra()
 
     data.removeThermalNoise(bg)
-    data.smooth(n=3)
-    data.cut(400, 3025, WN=True)
+    # data.smooth(n=3)
+    # data.cut(400, 3025, WN=True)
     labels = []
     x = 0
     for i in range(len(data.spectra)):
@@ -1239,13 +1250,12 @@ def brain_raman_depth():
 
     data.changeLabel(labels)
     data.ORPL(min_bubble_widths=70)
-    data.normalizeIntegration()
+    # data.normalizeIntegration()
     # data.pca()
     # data.pcaDisplay(1, 2)
     # data.pcaScatterPlot(1, 2)
     # data.displaySOD(focus_index=focus_index, save_fig='EP.png')
-    # data.displaySOD(focus_index=focus_index)
-
+    data.displaySOD(focus_index=focus_index)
 
 def test_remove():
     bg = spectrum.Acquisition(
@@ -1271,7 +1281,6 @@ def test_remove():
     # acc = data.PCA_KNNIndividualLabel(return_accuracy=True, save_fig='veal_matrice.png')
     # print(acc)
 
-
 def testPicRatio():
     bg = spectrum.Acquisition(
         '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
@@ -1285,44 +1294,185 @@ def testPicRatio():
     #             '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/data_seminaire/' + dir + '/').spectra())
     # data = spectrum.Spectra(data)
 
-    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/'):
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/'):
         if dir[0] == '.':
             continue
         data.append(
             spectrum.Acquisition(
-                '/Users/antoinerousseau/Desktop/maitrise/DATA/brain_data/' + dir + '/').spectra())
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/' + dir + '/').spectra())
     data = spectrum.Spectra(data)
-
-
-
-    # data = spectrum.Acquisition(
-    #     '/Users/antoinerousseau/Desktop/maitrise/DATA/20221028/caudateEP6_good/').spectra()
     data.removeThermalNoise(bg)
-    data.cut(400, 3025, WN=True)
-    data.ORPL(min_bubble_widths=70)
+    data.savgolFilter(5, 2)
+    data.butterworthFilter(8, 3)
+    # data.cut(400, 3025, WN=True)
+    # data.ORPL(min_bubble_widths=70)
+    # data.remove(1800, 2810, WN=True)
     # data.shortenLabels()
-    # data.displayMeanSTD()
+    # data.displayMeanSTD(STD=False)
+
+    # FOR VEAL -------
     # data.picRatio(l=[540, 560, 601, 616, 634, 695, 712, 737, 870, 921, 983, 996, 1056, 1081, 1124, 1169, 1265, 1294, 1435, 1450, 1550, 1600, 1657, 2722, 2850, 2882, 2932])
     # data.picRatio(l=[616, 634, 695, 996, 1056, 1081, 1265, 1294, 1435, 1450, 1657, 2850, 2882, 2932]
     # data.picRatio(l=[695, 996, 1056, 1081, 1265, 1294, 1435, 1450, 1657, 2932])
     # data.picRatio(l=[695, 996, 1081, 1265, 1294, 1435, 1450, 1657])
-    data.picRatio(l=[996, 1081, 1265, 1294, 1435, 1450, 1657])
+    # data.picRatio(l=[996, 1081, 1265, 1294, 1435, 1450, 1657])
 
-    # data.PR_PCA_LDA(scatter=[1, 2])
+    # FOR HANU --------------
+    data.picRatio(l=[542, 549, 560, 582, 605, 616, 655, 682, 693, 715, 735, 870, 900, 920, 982, 996, 1015, 1040, 1058, 1067, 1083, 1123, 1133, 1155, 1163, 1268, 1292, 1361, 1385, 1406, 1434, 1449, 1516, 1548, 1572, 1598, 1660, 2723, 2828, 2847, 2864, 2882, 2907, 2931]) # acc = 21
+    # data.picRatio(l=[542, 549, 560, 616, 682, 693, 715, 735, 870, 982, 996, 1040, 1058, 1067, 1083, 1155, 1163, 1268, 1292, 1434, 1449, 1548, 1660, 2847]) # acc = 35
+    # data.picRatio(l=[542, 616, 682, 693, 715, 735, 870, 982, 996, 1040, 1058, 1067, 1083, 1163, 1268, 1292, 1434, 1449, 1548, 1660]) # acc = 37
+    # data.picRatio(l=[542, 616, 682, 693, 735, 870, 982, 996, 1040, 1058, 1067, 1083, 1163, 1268, 1292, 1434, 1449, 1660]) # acc = 36
+    # data.picRatio(l=[542, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1268, 1449, 1660]) # acc = 35
+    # data.picRatio(l=[542, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1268, 1292, 1434, 1449, 1548, 1660, 2847]) # acc=37213403880070545
+    # data.picRatio(l=[542, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1292, 1434, 1449, 1548, 1660, 2847]) # acc=37918871252204583
+    # data.picRatio(l=[542, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1292, 1449, 1548, 1660, 2847]) # acc=3862433862433862
+    # data.picRatio(l=[549, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1292, 1449, 1548, 1660, 2847]) # acc=3927101
+    # data.picRatio(l=[549, 616, 693, 735, 870, 996, 1040, 1083, 1163, 1292, 1449, 1548, 1660, 2847])
+
+
+    # test with best allraman region
+    data.picRatio(l=[540, 551, 560, 656, 1274, 1292, 1435, 1449, 2847, 2863, 2880, 2933])
+
+
+
+    # 682 pas sur bosse, 693 sur bosse 982 pt un peu plus haut que 996 ?, 1040 gros pic gauche, 1058 pic juste WM, 1067 creux, 1083 principal pic, 1268 pic secondaire, 1292 pic principal, 1434 big, 1449 small dans big
+    data.shortenLabels()
+    data.PR_PCA_LDA(scatter=[1, 2])
+    data.PR_PCA_LDA(scatter=[3, 4])
     # data.pca()
     # data._getPCAdf()
-    acc = data.PR_KNNIndividualLabel(return_accuracy=True)
-    print(acc)
+    # acc = data.PR_KNNIndividualLabel(return_accuracy=True)
+    # print(acc)
     # data.PR_PCA_display(PC_scatter=[1, 2])
     # data.display()
 
+def iteratePR():
+    l = [542, 549, 560, 616, 682, 693, 715, 735, 870, 982, 996, 1040, 1058, 1067, 1083, 1155, 1163, 1268, 1292, 1434, 1449,
+     1548, 1660, 2847]
+
+    combs = []
+    for i in range(5, 21):
+        els = [list(x) for x in itertools.combinations(l, i)]
+        combs.extend(els)
+    print(len(combs))
+
+
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.cut(400, 3025, WN=True)
+    data.ORPL(min_bubble_widths=70)
+
+def findPR():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/clean_brain_data/clean_brain_data/' + dir + '/').spectra())
+    data = spectrum.Spectra(data)
+    data.removeThermalNoise(bg)
+    data.cut(400, 3025, WN=True)
+    data.ORPL(min_bubble_widths=70)
+    # data.shortenLabels()
+    GPi = data.getLabelSpectra(label=['GPi5_1_l', 'GPi3_f', 'GPi3', 'GPi2'])
+    GPe = data.getLabelSpectra(label=['GPe5_1_l', 'GPe3_f', 'GPe2_f', 'GPe2'])
+    GPi.add(GPe)
+
+    # FOR HANU --------------
+    # GPi.picRatio(
+    #     l=[542, 549, 560, 582, 605, 616, 655, 682, 693, 715, 735, 870, 900, 920, 982, 996, 1015, 1040, 1058, 1067, 1083,
+    #        1123, 1133, 1155, 1163, 1268, 1292, 1361, 1385, 1406, 1434, 1449, 1516, 1548, 1572, 1598, 1660, 2723, 2828,
+    #        2847, 2864, 2882, 2907, 2931])  # acc = 21
+    # l = [542, 549, 560, 582, 605, 616, 655, 682, 693, 715, 735, 870, 900, 920, 982, 996, 1015, 1040, 1058, 1067, 1083,
+    #             1123, 1133, 1155, 1163, 1268, 1292, 1361, 1385, 1406, 1434, 1449, 1516, 1548, 1572, 1598, 1660, 2723, 2828,
+    #             2847, 2864, 2882, 2907, 2931]
+
+
+    l = [542, 549, 560, 616, 682, 693, 715, 735, 870, 900, 982, 996, 1040, 1058, 1067, 1083, 1155, 1163, 1268, 1292, 1361, 1434,
+         1449, 1548, 1660, 2847, 2828, 2882, 2907, 2931]
+    combs = list(itertools.combinations(l, 2))
+
+    combinaisons = []
+    acc_list = []
+    for k, combinaison in enumerate(combs):
+        print((k / len(combs)) * 100, ' %')
+        GPi.picRatio(l=combinaison)
+        acc = GPi.PR_KNNIndividualLabel(return_accuracy=True, display=False)
+
+        combinaisons.append(combinaison)
+        acc_list.append(acc)
+    acc_list, combinaisons = zip(*sorted(zip(acc_list, combinaisons)))
+    print(acc_list[-10:])
+    print(combinaisons[-10:])
+
+    # top 10 GPi GPe:
+    # (0.7276595744680852, 0.7319148936170212, 0.7319148936170212, 0.7340425531914894, 0.7553191489361702, 0.7617021276595745, 0.7659574468085106, 0.7680851063829788, 0.7680851063829788, 0.8468085106382979)
+    # ((900, 2847), (549, 1268), (616, 1548), (542, 996), (542, 1268), (542, 1660), (616, 1660), (549, 1660), (560, 1660), (2847, 2847))
+    # top 10 putamen WM:
+    # (1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    # ((1361, 1434), (1361, 2847), (1361, 2847), (1434, 1449), (1434, 1548), (1434, 1660), (1449, 1548), (1449, 1660), (1548, 2847), (1548, 2847))
+    # J'assume que caudate WM va etre pareil
+    # top 10 STN SN:
+    # (0.8981348637015782, 0.9167862266857962, 0.9196556671449068, 0.926829268292683, 0.9282639885222381, 0.9282639885222381, 0.945480631276901, 0.9497847919655668, 0.9540889526542324, 0.9641319942611191)
+    # ((682, 1268), (560, 1268), (560, 1660), (982, 996), (549, 1268), (2847, 2847), (549, 1660), (682, 1660), (693, 1660), (616, 996))
+
+
+def tilefig():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
+
+    GP = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/GPi_GPe2_l/').spectra()
+    put_WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/Putamen_WM_l/').spectra()
+    caud_WM = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/caudate_WM_l/').spectra()
+    STN_SN = spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20230428/STN_SN_l/').spectra()
+
+    GP.removeThermalNoise(bg) # x=6 y=6
+    put_WM.removeThermalNoise(bg) # x=6 y=6
+    caud_WM.removeThermalNoise(bg) # x=6 y=6
+    STN_SN.removeThermalNoise(bg) # x=16 y=6
+
+    # best 3 put \ WM  : 1434 / 1660, 1449 / 1660, 870 / 996, 1434 / 1449
+    # vest 3 STN \ SN  : 1434 / 1449, 870 / 1040, 1040 / 1083, 616 / 1548
+
+    # data = GP # [560, 1660] et [900, 2847]
+    # data = put_WM # [1548, 2847] et [1449, 1660] et [1361, 1434]
+    # data = caud_WM # [1449, 1660] et [1361, 1434]
+    data = STN_SN #
+    data.cut(400, 3025, WN=True)
+    data.ORPL(min_bubble_widths=70)
+    data.display()
+    # data.tile(x=16, y=6, WN_to_display=[616, 996], title='STN et SN')
+
+    data.tile(x=16, y=6, WN_to_display=[616, 996], title='STN et SN', save_fig='STN_SN_tile.png')
+
+
+
+
+
+# iteratePR()
 # testPicRatio()
 # test_remove()
 # brain_raman_depth()
 # figures_singe()
 # figures_veau()
-Memoire_array(6)
+# figures_hanu()
+Memoire_array(0)
 # just_displaying()
+# findPR()
+# tilefig()
 #
 
 

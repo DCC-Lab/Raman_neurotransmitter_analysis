@@ -27,6 +27,7 @@ def best_anal(FDRC_array, pre_array, filter_array, DR_array, cluster_array, norm
     # FDRC_array[0]:
     # 0 : smooth --> pre_array : 1d array
     # 1 : savgol --> pre_array : 2d array
+    # 2 : rien
     # ----------------------
     # FDRC_array[1]:
     # 0 : ALS --> filter_array : 2d array
@@ -381,7 +382,7 @@ def iterate_trough_permutations():
                     # d_array = [5]
                 if d == 1:
                     # d_array = [[2, 5], [5, 10, 30], [0.05, 0.5]]
-                    d_array = [[2, 3, 5], [8, 10], [0.1]]
+                    d_array = [[2, 5], [8, 10], [0.1]]
                     # d_array = [[4], [15], [0.5]]
 
                 # if d == 2:
@@ -404,7 +405,7 @@ def iterate_trough_permutations():
                         c_array = [1]
 
                     for norm in [0, 1]:
-                        print(str(tracking_number * 100/(len(pre) * len(filter) * len(DR) * len(cluster) * 2)) + ' %')
+                        print(round(tracking_number * 100/(len(pre) * len(filter) * len(DR) * len(cluster) * 2)), ' %')
                         tracking_number += 1
 
                         if norm == 0:
