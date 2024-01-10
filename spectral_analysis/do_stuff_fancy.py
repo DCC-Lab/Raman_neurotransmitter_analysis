@@ -412,10 +412,10 @@ def shavDataRaw():
 
 def RMLensesOptimisation():
     data = []
-    for dir in os.listdir('/Users/antoinerousseau/Desktop/20220921/'):
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20220921/'):
         if dir[0] == '.':
             continue
-        data.append(spectrum.Acquisition('/Users/antoinerousseau/Desktop/20220921/' + dir + '/').spectra())
+        data.append(spectrum.Acquisition('/Users/antoinerousseau/Desktop/maitrise/DATA/20220921/' + dir + '/').spectra())
 
     data = spectrum.Spectra(data)
     data.displayMeanSTD()
@@ -1021,6 +1021,7 @@ def just_displaying():
     data.remove(1800, 2810, WN=True)
 
     data.normalizeIntegration()
+    data.displayMeanSTD()
     # en danger:
 
     putamen = data.getLabelSpectra(['putamen5_1_l', 'putamen1_l', 'putamen2_f', 'putamen2'])
@@ -1035,8 +1036,8 @@ def just_displaying():
     # putamen.R2_printer()
     # putamen.displayMeanSTD()
 
-    thalamus.R2_printer()
-    thalamus.displayMeanSTD()
+    # thalamus.R2_printer()
+    # thalamus.displayMeanSTD()
 
     # caudate.R2_printer()
     # caudate.displayMeanSTD()
@@ -1429,7 +1430,6 @@ def findPR():
     # (0.8981348637015782, 0.9167862266857962, 0.9196556671449068, 0.926829268292683, 0.9282639885222381, 0.9282639885222381, 0.945480631276901, 0.9497847919655668, 0.9540889526542324, 0.9641319942611191)
     # ((682, 1268), (560, 1268), (560, 1660), (982, 996), (549, 1268), (2847, 2847), (549, 1660), (682, 1660), (693, 1660), (616, 996))
 
-
 def tilefig():
     bg = spectrum.Acquisition(
         '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dn/').spectraSum()
@@ -1458,6 +1458,26 @@ def tilefig():
 
     data.tile(x=16, y=6, WN_to_display=[616, 996], title='STN et SN', save_fig='STN_SN_tile.png')
 
+def dichexp():
+    data = []
+    for dir in os.listdir('/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dichroic_experiment/'):
+        if dir[0] == '.':
+            continue
+        data.append(
+            spectrum.Acquisition(
+                '/Users/antoinerousseau/Desktop/maitrise/DATA/20230421/dichroic_experiment/' + dir + '/', fileType='USB2000').spectra())
+    data = spectrum.Spectra(data)
+    data.displayMeanSTD(WN=False)
+
+def figiso():
+    bg = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220802/bg/').spectraSum()
+    iso = spectrum.Acquisition(
+        '/Users/antoinerousseau/Desktop/maitrise/DATA/20220929/morning_verif/iso_verif/').spectra()
+
+    iso.removeThermalNoise(bg)
+    iso.cut(200, 3025, WN=True)
+    iso.displayMeanSTD(STD=False, display_label=False, display_pic=[811, 944, 1125, 1162, 1447, 2882, 2923, 2976], save_fig='iso.png')
 
 
 
@@ -1469,10 +1489,14 @@ def tilefig():
 # figures_singe()
 # figures_veau()
 # figures_hanu()
-Memoire_array(0)
+# Memoire_array(0)
 # just_displaying()
 # findPR()
 # tilefig()
+# dichexp()
+figiso()
+# RMLensesOptimisation()
+
 #
 
 

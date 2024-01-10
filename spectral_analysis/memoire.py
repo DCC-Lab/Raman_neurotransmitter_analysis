@@ -356,7 +356,7 @@ def iterate_trough_permutations():
             p_array = [3, 5]
             # p_array = [5]
         if p == 1:
-            p_array = [[3, 5, 8], [2]]
+            p_array = [[3, 5], [2]]
             # p_array = [[9], [3]]
         if p == 2:
             p_array = [0]
@@ -364,7 +364,7 @@ def iterate_trough_permutations():
         for f in filter:
             if f == 0:
                 # f_array = [[0.1, 10, 1000], [0.00001, 0.0001]]
-                f_array = [[100, 1000], [0.0001, 0.001]]
+                f_array = [[1000], [0.001]]
                 # f_array = [[10], [0.001]]
             if f == 1:
                 # f_array = [[5, 10, 20], [3]]

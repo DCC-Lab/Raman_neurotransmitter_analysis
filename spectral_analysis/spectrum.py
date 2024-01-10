@@ -1414,7 +1414,7 @@ class Spectra:
                 unique_list.append(elem)
         return unique_list
 
-    def displayMeanSTD(self, WN=True, display_label=True, save_fig=None, figsize=(12, 6), STD=True):
+    def displayMeanSTD(self, WN=True, display_label=True, save_fig=None, figsize=(12, 6), STD=True, display_pic=None):
         labels = self._Unique(self.labelList)
         color_list = ['red', 'black', 'green', 'blue', '#332288', 'orange', '#AA4499', '#88CCEE', 'cyan', '#999933',
                       '#44AA99', '#DDCC77', '#805E2B', 'yellow']
@@ -1466,6 +1466,31 @@ class Spectra:
                 if STD == True:
                     plt.fill_between(WN_values[i], data_means[i] - data_STD[i], data_means[i] + data_STD[i],
                                      color=color_list[i], alpha=0.5)
+            if display_pic != None:
+                treshold = 150
+                axes = plt.gca()
+                ratio = 0.96
+                ratio_list = []
+                for i, j in enumerate(display_pic):
+                    if i == 0:
+                        ratio_list.append(ratio)
+                        continue
+                    if display_pic[i] - display_pic[i - 1] <= treshold and ratio != 0.90:
+                        ratio = round(ratio - 0.03, 2)
+                        ratio_list.append(ratio)
+                        continue
+                    if display_pic[i] - display_pic[i - 1] <= treshold and ratio == 0.90:
+                        ratio = 0.96
+                        ratio_list.append(ratio)
+                        continue
+                    if display_pic[i] - display_pic[i - 1] >= treshold:
+                        ratio = 0.96
+                        ratio_list.append(ratio)
+                        continue
+
+                for i, pic in enumerate(display_pic):
+                    plt.axvline(x=pic, ymax=(ratio_list[i] - 0.005), color='black', ls='--', lw=1,)
+                    plt.annotate(str(pic), (pic, ratio_list[i] * axes.get_ylim()[1]), ha='center')
             plt.xlabel('Wavenumbers [cm-1]')
         plt.ylabel('Counts [-]')
 
